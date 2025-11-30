@@ -524,8 +524,29 @@ body {
 
 </div>
 
-<!-- Sözlük ve oyun scriptleri -->
-<script src="words_tr.js"></script>
-<script src="script.js"></script>
+  <!-- Firebase SDK (compat sürümü) -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+
+  <script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAcKlwqRKpzjJTTp_WptQNxuKLRcJXqH6Y",
+  authDomain: "hidden-word-game.firebaseapp.com",
+  projectId: "hidden-word-game",
+  storageBucket: "hidden-word-game.firebasestorage.app",
+  messagingSenderId: "958945265776",
+  appId: "1:958945265776:web:1e57bd1b444912b15fccb5",
+  measurementId: "G-2QG1KPS68L"
+};
+
+    // Firebase'i başlat
+    firebase.initializeApp(firebaseConfig);
+  </script>
+
+  <!-- Sözlük ve oyun scriptleri -->
+  <script src="words_tr.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
+
+
