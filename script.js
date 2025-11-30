@@ -39,8 +39,37 @@ let keydownHandler = null;
 let WORD_SET      = null;
 let CURRENT_THEME = { ...DEFAULT_THEME };
 let LEADERBOARD_DATA = [];
+let FIREBASE_DB = null; 
 
 let playerNameCache = "";
+/* ================== FIREBASE YARDIMCI FONKSİYONLAR ================== */
+
+function initFirebaseDb() {
+  try {
+    if (typeof firebase !== "undefined") {
+      FIREBASE_DB = firebase.database();
+      console.log("Firebase DB hazır");
+    } else {
+      console.warn("firebase globali yok (index.html'deki script sırasını kontrol et)");
+    }
+  } catch (e) {
+    console.warn("Firebase başlatılamadı:", e);
+  }
+}
+
+function getFirebaseLbPath(contextId) {
+  const ctx = contextId || "default";
+  return "leaderboard/" + ctx;
+}
+
+function saveScoreToFirebase(item, contextId) {
+  if (!FIREBASE_DB) return; // Firebase yoksa sessizce geç
+  const path = getFirebaseLbPath(contextId);
+  FIREBASE_DB.ref(path).push(item).catch(err => {
+    console.warn("Firebase'e skor yazılamadı:", err);
+  });
+}
+
 
 /* ================== TÜRKÇE BÜYÜK HARF DÖNÜŞTÜRME ================== */
 
@@ -270,12 +299,39 @@ function loadLeaderboard(contextId) {
   } catch (e) {
     console.warn("Leaderboard okunamadı:", e);
   }
+
+  // Local'dekini göster (offline destek)
   arr.sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score;
     return (a.ts || 0) - (b.ts || 0);
   });
   LEADERBOARD_DATA = arr;
   renderLeaderboard(arr);
+
+  // 🔥 Firebase'ten güncel listeyi çek
+  if (FIREBASE_DB) {
+    const path = getFirebaseLbPath(contextId);
+    FIREBASE_DB.ref(path).once("value").then(snapshot => {
+      const val = snapshot.val();
+      if (!val) return;
+
+      const list = Object.values(val);
+      list.sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        return (a.ts || 0) - (b.ts || 0);
+      });
+      LEADERBOARD_DATA = list;
+      renderLeaderboard(list);
+
+      try {
+        localStorage.setItem(key, JSON.stringify(list));
+      } catch (e) {
+        console.warn("Local leaderboard güncellenemedi:", e);
+      }
+    }).catch(err => {
+      console.warn("Firebase leaderboard okunamadı:", err);
+    });
+  }
 }
 
 function saveScoreToLeaderboard(name, score, attempts, wordLength, contextId) {
@@ -294,7 +350,11 @@ function saveScoreToLeaderboard(name, score, attempts, wordLength, contextId) {
     console.warn("Leaderboard yazılamadı:", e);
   }
   renderLeaderboard(arr);
+
+  // 🔥 Online kaydı da yap
+  saveScoreToFirebase(item, contextId);
 }
+
 
 function renderLeaderboard(rows) {
   const tbody = document.getElementById("lb-body");
@@ -980,7 +1040,9 @@ window.addEventListener("load", async () => {
     try { await window.WORDS_READY; } catch (e) { console.warn(e); }
   }
 
+  initFirebaseDb();          // 🔥 Firebase Realtime DB'yi başlat
   loadThemeFromStorage();
   setupUIEvents();
   handleDuelloLinkIfAny();
 });
+
