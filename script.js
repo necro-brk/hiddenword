@@ -23,8 +23,10 @@ let CURRENT_GAME_TYPE  = null;   // "solo", "duel-create", "duel-guess", "group"
 let CURRENT_MODE       = "5";    // string olarak harf sayısı: "3".."8"
 let CURRENT_ROOM       = null;   // Grup modu oda kodu
 let CURRENT_CONTEXT_ID = "default"; // Leaderboard context
+let FIREBASE_DB        = null;   // 🔥 Realtime Database referansı
 
 let SECRET_WORD = "";
+
 let ROWS = 6;
 let COLS = 5;
 
@@ -101,6 +103,24 @@ function getRoomPath(code) {
   return "rooms/" + code;
 }
 
+/* ================== FIREBASE ODA YARDIMCI FONKSİYONLARI ================== */
+
+function initFirebaseDb() {
+  try {
+    if (typeof firebase !== "undefined") {
+      FIREBASE_DB = firebase.database();
+      console.log("Firebase DB hazır");
+    } else {
+      console.warn("firebase globali yok (index.html'deki script sırasını kontrol et)");
+    }
+  } catch (e) {
+    console.warn("Firebase başlatılamadı:", e);
+  }
+}
+
+function getRoomPath(code) {
+  return "rooms/" + code;
+}
 
 
 /* ================== TÜRKÇE BÜYÜK HARF DÖNÜŞTÜRME ================== */
@@ -805,8 +825,9 @@ function createGroupRoom() {
 }
 
 
+
 function joinGroupRoomByCode() {
-  // HTML'deki gerçek id'leri kullanıyoruz
+  // HTML'deki gerçek id'ler
   const input  = document.getElementById("join-room-code");
   const status = document.getElementById("join-room-status");
   if (!input || !status) return;
@@ -836,7 +857,7 @@ function joinGroupRoomByCode() {
       return;
     }
 
-    // Oda bulundu → gerekli state'leri doldur
+    // Oda bulundu → state'leri doldur
     CURRENT_ROOM = code;
     SECRET_WORD  = data.secretWord;
     CURRENT_MODE = String(data.mode || data.secretWord.length || 5);
@@ -1091,6 +1112,7 @@ window.addEventListener("load", async () => {
   setupUIEvents();
   handleDuelloLinkIfAny();
 });
+
 
 
 
