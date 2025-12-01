@@ -300,13 +300,18 @@ function loadLeaderboard(contextId) {
     console.warn("Leaderboard okunamadı:", e);
   }
 
-  // Local'dekini göster (offline destek)
+  // Önce local'dekini göster (offline destek)
   arr.sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score;
     return (a.ts || 0) - (b.ts || 0);
   });
   LEADERBOARD_DATA = arr;
   renderLeaderboard(arr);
+
+  // 🔥 Firebase'ten gerçek zamanlı dinle
+  subscribeLeaderboardFromFirebase(contextId);
+}
+
 
   // 🔥 Firebase'ten güncel listeyi çek
   if (FIREBASE_DB) {
@@ -1045,4 +1050,5 @@ window.addEventListener("load", async () => {
   setupUIEvents();
   handleDuelloLinkIfAny();
 });
+
 
