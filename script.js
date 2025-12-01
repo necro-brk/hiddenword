@@ -806,8 +806,9 @@ function createGroupRoom() {
 
 
 function joinGroupRoomByCode() {
-  const input  = document.getElementById("group-join-code-input");
-  const status = document.getElementById("group-join-status");
+  // HTML'deki gerçek id'leri kullanıyoruz
+  const input  = document.getElementById("join-room-code");
+  const status = document.getElementById("join-room-status");
   if (!input || !status) return;
 
   const code = (input.value || "").trim().toUpperCase();
@@ -835,6 +836,7 @@ function joinGroupRoomByCode() {
       return;
     }
 
+    // Oda bulundu → gerekli state'leri doldur
     CURRENT_ROOM = code;
     SECRET_WORD  = data.secretWord;
     CURRENT_MODE = String(data.mode || data.secretWord.length || 5);
@@ -846,6 +848,7 @@ function joinGroupRoomByCode() {
     status.style.color = "#f97316";
   });
 }
+
 
 
 function startGroupGame() {
@@ -1088,6 +1091,7 @@ window.addEventListener("load", async () => {
   setupUIEvents();
   handleDuelloLinkIfAny();
 });
+
 
 
 
