@@ -23,7 +23,6 @@ let CURRENT_GAME_TYPE  = null;   // "solo", "duel-create", "duel-guess", "group"
 let CURRENT_MODE       = "5";    // string olarak harf sayısı: "3".."8"
 let CURRENT_ROOM       = null;   // Grup modu oda kodu
 let CURRENT_CONTEXT_ID = "default"; // Leaderboard context
-let FIREBASE_DB       = null;   // Firebase Realtime Database referansı
 
 let SECRET_WORD = "";
 let ROWS = 6;
@@ -45,6 +44,8 @@ let FIREBASE_DB = null;
 let playerNameCache = "";
 /* ================== FIREBASE YARDIMCI FONKSİYONLAR ================== */
 
+/* ================== FIREBASE YARDIMCI FONKSİYONLAR ================== */
+
 function initFirebaseDb() {
   try {
     if (typeof firebase !== "undefined") {
@@ -64,12 +65,42 @@ function getFirebaseLbPath(contextId) {
 }
 
 function saveScoreToFirebase(item, contextId) {
-  if (!FIREBASE_DB) return; // Firebase yoksa sessizce geç
+  if (!FIREBASE_DB) return;
   const path = getFirebaseLbPath(contextId);
   FIREBASE_DB.ref(path).push(item).catch(err => {
     console.warn("Firebase'e skor yazılamadı:", err);
   });
 }
+
+function subscribeLeaderboardFromFirebase(contextId) {
+  if (!FIREBASE_DB) return;
+  const key  = getLBKey(contextId);
+  const path = getFirebaseLbPath(contextId);
+
+  FIREBASE_DB.ref(path).on("value", snapshot => {
+    const val  = snapshot.val() || {};
+    const rows = Object.values(val);
+
+    rows.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return (a.ts || 0) - (b.ts || 0);
+    });
+
+    LEADERBOARD_DATA = rows;
+    renderLeaderboard(rows);
+
+    try {
+      localStorage.setItem(key, JSON.stringify(rows));
+    } catch (e) {
+      console.warn("Local leaderboard güncellenemedi:", e);
+    }
+  });
+}
+
+function getRoomPath(code) {
+  return "rooms/" + code;
+}
+
 
 
 /* ================== TÜRKÇE BÜYÜK HARF DÖNÜŞTÜRME ================== */
@@ -132,23 +163,6 @@ function pickRandomWord(modeValue) {
   }
 
   /* ================== FIREBASE (ODA SİSTEMİ) ================== */
-
-function initFirebaseDb() {
-  try {
-    if (typeof firebase !== "undefined") {
-      FIREBASE_DB = firebase.database();
-      console.log("Firebase DB hazır");
-    } else {
-      console.warn("firebase globali yok (index.html'deki script sırasını kontrol et)");
-    }
-  } catch (e) {
-    console.warn("Firebase başlatılamadı:", e);
-  }
-}
-
-function getRoomPath(code) {
-  return "rooms/" + code;
-}
 
   // Hiç yoksa tüm sözlükten seçeceğiz ama yine de uzunluğu zorlayacağız
   if (!candidates.length) {
@@ -330,33 +344,6 @@ function loadLeaderboard(contextId) {
 
   // 🔥 Firebase'ten gerçek zamanlı dinle
   subscribeLeaderboardFromFirebase(contextId);
-}
-
-
-  // 🔥 Firebase'ten güncel listeyi çek
-  if (FIREBASE_DB) {
-    const path = getFirebaseLbPath(contextId);
-    FIREBASE_DB.ref(path).once("value").then(snapshot => {
-      const val = snapshot.val();
-      if (!val) return;
-
-      const list = Object.values(val);
-      list.sort((a, b) => {
-        if (b.score !== a.score) return b.score - a.score;
-        return (a.ts || 0) - (b.ts || 0);
-      });
-      LEADERBOARD_DATA = list;
-      renderLeaderboard(list);
-
-      try {
-        localStorage.setItem(key, JSON.stringify(list));
-      } catch (e) {
-        console.warn("Local leaderboard güncellenemedi:", e);
-      }
-    }).catch(err => {
-      console.warn("Firebase leaderboard okunamadı:", err);
-    });
-  }
 }
 
 function saveScoreToLeaderboard(name, score, attempts, wordLength, contextId) {
@@ -1101,6 +1088,7 @@ window.addEventListener("load", async () => {
   setupUIEvents();
   handleDuelloLinkIfAny();
 });
+
 
 
 
