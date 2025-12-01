@@ -23,6 +23,7 @@ let CURRENT_GAME_TYPE  = null;   // "solo", "duel-create", "duel-guess", "group"
 let CURRENT_MODE       = "5";    // string olarak harf sayısı: "3".."8"
 let CURRENT_ROOM       = null;   // Grup modu oda kodu
 let CURRENT_CONTEXT_ID = "default"; // Leaderboard context
+let FIREBASE_DB       = null;   // Firebase Realtime Database referansı
 
 let SECRET_WORD = "";
 let ROWS = 6;
@@ -129,6 +130,25 @@ function pickRandomWord(modeValue) {
   if (!Number.isNaN(targetLen)) {
     candidates = all.filter(w => w.length === targetLen);
   }
+
+  /* ================== FIREBASE (ODA SİSTEMİ) ================== */
+
+function initFirebaseDb() {
+  try {
+    if (typeof firebase !== "undefined") {
+      FIREBASE_DB = firebase.database();
+      console.log("Firebase DB hazır");
+    } else {
+      console.warn("firebase globali yok (index.html'deki script sırasını kontrol et)");
+    }
+  } catch (e) {
+    console.warn("Firebase başlatılamadı:", e);
+  }
+}
+
+function getRoomPath(code) {
+  return "rooms/" + code;
+}
 
   // Hiç yoksa tüm sözlükten seçeceğiz ama yine de uzunluğu zorlayacağız
   if (!candidates.length) {
@@ -771,10 +791,22 @@ function createGroupRoom() {
   CURRENT_MODE     = mode;
 
   ensureWordSet();
-  const word = pickRandomWord(mode);
+  const word     = pickRandomWord(mode);
   const roomCode = generateRoomCode();
   CURRENT_ROOM   = roomCode;
   SECRET_WORD    = word;
+
+  // 🔥 Oda bilgisini Firebase'e yaz
+  if (FIREBASE_DB) {
+    const path = getRoomPath(roomCode);
+    FIREBASE_DB.ref(path).set({
+      secretWord: word,
+      mode: parseInt(mode, 10) || word.length,
+      createdAt: Date.now()
+    }).catch(err => {
+      console.warn("Oda Firebase'e yazılamadı:", err);
+    });
+  }
 
   const codeElem  = document.getElementById("group-room-code");
   const resultBox = document.getElementById("group-room-result");
@@ -783,13 +815,12 @@ function createGroupRoom() {
     resultBox.classList.remove("screen-hidden");
     resultBox.style.display = "block";
   }
-
-  // Şu an için sadece bu cihazda geçerli demo.
 }
 
+
 function joinGroupRoomByCode() {
-  const input  = document.getElementById("join-room-code");
-  const status = document.getElementById("join-room-status");
+  const input  = document.getElementById("group-join-code-input");
+  const status = document.getElementById("group-join-status");
   if (!input || !status) return;
 
   const code = (input.value || "").trim().toUpperCase();
@@ -799,16 +830,36 @@ function joinGroupRoomByCode() {
     return;
   }
 
-  // Gerçek online versiyonda backend'e soracağız.
-  if (!SECRET_WORD || !CURRENT_ROOM || CURRENT_ROOM !== code) {
-    status.textContent = "Bu kodla oluşturulmuş bir oda yok (demo sürüm).";
+  if (!FIREBASE_DB) {
+    status.textContent = "Sunucuya bağlanırken hata oluştu (Firebase yok).";
     status.style.color = "#f97316";
     return;
   }
 
-  CURRENT_ROOM = code;
-  startGroupGame();
+  status.textContent = "Oda aranıyor...";
+  status.style.color = "#e5e7eb";
+
+  const path = getRoomPath(code);
+  FIREBASE_DB.ref(path).once("value").then(snapshot => {
+    const data = snapshot.val();
+    if (!data || !data.secretWord) {
+      status.textContent = "Bu kodla oluşturulmuş bir oda bulunamadı.";
+      status.style.color = "#f97316";
+      return;
+    }
+
+    CURRENT_ROOM = code;
+    SECRET_WORD  = data.secretWord;
+    CURRENT_MODE = String(data.mode || data.secretWord.length || 5);
+
+    startGroupGame();
+  }).catch(err => {
+    console.warn("Oda verisi okunamadı:", err);
+    status.textContent = "Odaya bağlanırken bir hata oluştu.";
+    status.style.color = "#f97316";
+  });
 }
+
 
 function startGroupGame() {
   CURRENT_GAME_TYPE = "group";
@@ -1050,5 +1101,7 @@ window.addEventListener("load", async () => {
   setupUIEvents();
   handleDuelloLinkIfAny();
 });
+
+
 
 
