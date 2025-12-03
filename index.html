@@ -663,12 +663,28 @@ const firebaseConfig = {
     // Firebase'i başlat
     firebase.initializeApp(firebaseConfig);
   </script>
+  <script>
+    // Oyun kilit sistemi değişkeni
+    let GAME_ACTIVE = false;
+
+    // Firebase realtime gameState dinleme
+    const db = firebase.database();
+    const gameStateRef = db.ref('control/gameState');
+
+    gameStateRef.on('value', (snapshot) => {
+        const state = snapshot.val();
+        GAME_ACTIVE = (state === 'open');
+        console.log("GAME_ACTIVE =", GAME_ACTIVE);
+    });
+</script>
+
 
   <!-- Sözlük ve oyun scriptleri -->
   <script src="words_tr.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
+
 
 
 
