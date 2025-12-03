@@ -49,7 +49,7 @@ let LEADERBOARD_DATA = [];
 
 let playerNameCache = "";
 
-/* ================== FIREBASE YARDIMCI FONKSİYONLAR ================== */
+/* ==================  YARDIMCI FONKSİYONLAR ================== */
 
 function initFirebaseDb() {
   try {
@@ -597,3 +597,4 @@ function submitGuess() {
 
     let coreScore = baseCore - attemptPenalty + lengthBonus;
     if (coreScore < 0
+
