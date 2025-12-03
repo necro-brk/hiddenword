@@ -41,7 +41,6 @@ let keydownHandler = null;
 let WORD_SET      = null;
 let CURRENT_THEME = { ...DEFAULT_THEME };
 let LEADERBOARD_DATA = [];
-let FIREBASE_DB = null; 
 
 let playerNameCache = "";
 /* ================== FIREBASE YARDIMCI FONKSİYONLAR ================== */
@@ -1112,6 +1111,7 @@ window.addEventListener("load", async () => {
   setupUIEvents();
   handleDuelloLinkIfAny();
 });
+
 
 
 
