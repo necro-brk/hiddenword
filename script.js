@@ -14,6 +14,9 @@ const DEFAULT_THEME = {
   tileCorrect:   "#16a34a",
   tilePresent:   "#eab308",
   tileAbsent:    "#111827",
+  const IS_TOUCH_DEVICE =
+  "ontouchstart" in window || navigator.maxTouchPoints > 0;
+
 };
 
 /* ================== GLOBAL STATE ================== */
@@ -479,9 +482,21 @@ function createKey(label, value, isSpecial) {
   btn.className = "key" + (isSpecial ? " special" : "");
   btn.textContent = label;
   btn.dataset.value = value;
-  btn.addEventListener("click", () => handleKey(value));
+
+  if (IS_TOUCH_DEVICE) {
+    // Mobilde çift dokunma zoom’unu engelle
+    btn.addEventListener("touchstart", (e) => {
+      e.preventDefault();      // tarayıcıya "bu jesti ben hallediyorum" diyoruz
+      handleKey(value);        // direkt bizim fonksiyon çalışıyor
+    });
+  } else {
+    // Masaüstü için normal tıklama
+    btn.addEventListener("click", () => handleKey(value));
+  }
+
   return btn;
 }
+
 
 function attachKeydown() {
   if (keydownHandler) {
@@ -1087,4 +1102,5 @@ window.addEventListener("load", async () => {
   setupUIEvents();
   handleDuelloLinkIfAny();
 });
+
 
