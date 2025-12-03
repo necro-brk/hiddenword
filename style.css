@@ -510,13 +510,28 @@ select {
 
 /* ================== RESPONSIVE ================== */
 
+/* ================== RESPONSIVE ================== */
+
 @media (max-width: 600px) {
+  /* Gövdeyi yukarı al, yükseklik zorlamasını kaldır */
+  html, body {
+    height: auto;
+  }
+
+  body {
+    align-items: flex-start;
+    padding-top: 8px;
+  }
+
+  /* Uygulama kutusu tam ekran kullanıp içeriye yaklaşsın */
   #app {
-    padding: 10px;
+    width: 100%;
+    max-width: 100%;
+    padding: 8px 8px 16px;
   }
 
   .panel {
-    padding: 14px 12px 16px;
+    padding: 12px 10px 14px;
   }
 
   .creator-row,
@@ -530,11 +545,18 @@ select {
     align-items: center;
   }
 
-  /* 🔥 MOBİL KLAVYE AYARLARI */
+  /* 🔥 TAHTA: biraz küçült, daha az yer kaplasın */
+  #board {
+    transform: scale(0.9);
+    transform-origin: top center;
+    margin-top: 4px;
+    margin-bottom: 8px;
+  }
 
+  /* 🔥 MOBİL KLAVYE: daha büyük ve satırı dolduran tuşlar */
   #keyboard {
     max-width: 100%;
-    margin: 8px auto 0;
+    margin: 6px auto 0;
   }
 
   .kb-row {
@@ -543,9 +565,9 @@ select {
 
   .key {
     flex: 1 1 auto;        /* Satırı doldursun */
-    min-height: 44px;      /* Parmağa uygun yükseklik */
-    padding: 10px 0;
-    font-size: 16px;       /* Harfler daha büyük */
+    min-height: 44px;      /* Parmak için rahat yükseklik */
+    padding: 8px 0;
+    font-size: 16px;       /* Daha büyük harf */
     border-radius: 10px;
   }
 
@@ -553,16 +575,13 @@ select {
     flex: 1.5 1 auto;      /* ENTER / SİL biraz daha geniş */
     font-size: 14px;
   }
-
-  /* Tahtayı hafif küçült ki klavye için yer açılsın */
-  #board {
-    transform: scale(0.9);
-    transform-origin: top center;
-  }
 }
 
+/* Diğer yerlerde kullandığın hidden sınıfı aynen kalsın */
 .hidden {
   display: none !important;
 }
+
+
 
 
