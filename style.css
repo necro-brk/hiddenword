@@ -508,10 +508,6 @@ select {
 
 /* ================== RESPONSIVE ================== */
 
-/* ================== RESPONSIVE ================== */
-
-/* ================== RESPONSIVE ================== */
-
 @media (max-width: 600px) {
   /* Gövdeyi yukarı al, yükseklik zorlamasını kaldır */
   html, body {
@@ -545,7 +541,7 @@ select {
     align-items: center;
   }
 
-  /* 🔥 TAHTA: biraz küçült, daha az yer kaplasın */
+  /* Tahta: biraz küçült, daha az yer kaplasın */
   #board {
     transform: scale(0.9);
     transform-origin: top center;
@@ -553,7 +549,7 @@ select {
     margin-bottom: 8px;
   }
 
-  /* 🔥 MOBİL KLAVYE: daha büyük ve satırı dolduran tuşlar */
+  /* Mobil klavye: daha büyük ve satırı dolduran tuşlar */
   #keyboard {
     max-width: 100%;
     margin: 6px auto 0;
@@ -564,24 +560,20 @@ select {
   }
 
   .key {
-    flex: 1 1 auto;        /* Satırı doldursun */
-    min-height: 44px;      /* Parmak için rahat yükseklik */
+    flex: 1 1 auto;
+    min-height: 44px;
     padding: 8px 0;
-    font-size: 16px;       /* Daha büyük harf */
+    font-size: 16px;
     border-radius: 10px;
   }
 
   .key.special {
-    flex: 1.5 1 auto;      /* ENTER / SİL biraz daha geniş */
+    flex: 1.5 1 auto;
     font-size: 14px;
   }
 }
 
-/* Diğer yerlerde kullandığın hidden sınıfı aynen kalsın */
+/* Genel hidden sınıfı */
 .hidden {
   display: none !important;
 }
-
-
-
-
