@@ -426,26 +426,25 @@ function setStatus(message, color) {
 
 /* ================== KLAVYE ================== */
 
+/* ================== KLAVYE ================== */
+
 function buildKeyboard() {
   const keyboardElem = document.getElementById("keyboard");
   keyboardElem.innerHTML = "";
   keyButtons = {};
   keyState   = {};
 
-  const layout = [
+  // Üst 3 satır: iPhone Türkçe Q klavyesi
+  const rows = [
     "QWERTYUIOPĞÜ",
     "ASDFGHJKLŞİ",
     "ZXCVBNMÖÇ"
   ];
 
-  layout.forEach((row, idx) => {
+  // ÜSTTEKİ 3 SATIR
+  rows.forEach((row, idx) => {
     const rowDiv = document.createElement("div");
     rowDiv.className = "kb-row";
-
-    if (idx === 2) {
-      const enterBtn = createKey("ENTER", "ENTER", true);
-      rowDiv.appendChild(enterBtn);
-    }
 
     for (const ch of row) {
       const btn = createKey(ch, ch, false);
@@ -453,14 +452,27 @@ function buildKeyboard() {
       keyButtons[ch] = btn;
     }
 
+    // üçüncü satırın sağına SİL tuşu
     if (idx === 2) {
       const backBtn = createKey("⌫", "BACK", true);
+      backBtn.classList.add("key-backspace");
       rowDiv.appendChild(backBtn);
     }
 
     keyboardElem.appendChild(rowDiv);
   });
+
+  // EN ALTA GENİŞ ENTER SATIRI
+  const enterRow = document.createElement("div");
+  enterRow.className = "kb-row";
+
+  const enterBtn = createKey("ENTER", "ENTER", true);
+  enterBtn.classList.add("key-enter");
+  enterRow.appendChild(enterBtn);
+
+  keyboardElem.appendChild(enterRow);
 }
+
 
 function createKey(label, value, isSpecial) {
   const btn = document.createElement("button");
@@ -1075,3 +1087,4 @@ window.addEventListener("load", async () => {
   setupUIEvents();
   handleDuelloLinkIfAny();
 });
+
