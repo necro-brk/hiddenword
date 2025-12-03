@@ -664,18 +664,19 @@ const firebaseConfig = {
     firebase.initializeApp(firebaseConfig);
   </script>
   <script>
-    // Oyun kilit sistemi değişkeni
-    let GAME_ACTIVE = false;
+<!-- 🔥 OYUN KİLİT SİSTEMİ -->
+<script>
+  // Oyun varsayılan olarak kapalı
+  let GAME_ACTIVE = false;
 
-    // Firebase realtime gameState dinleme
-    const db = firebase.database();
-    const gameStateRef = db.ref('control/gameState');
+  // Realtime Database'den control/gameState dinle
+  const gameStateRef = firebase.database().ref('control/gameState');
 
-    gameStateRef.on('value', (snapshot) => {
-        const state = snapshot.val();
-        GAME_ACTIVE = (state === 'open');
-        console.log("GAME_ACTIVE =", GAME_ACTIVE);
-    });
+  gameStateRef.on('value', (snapshot) => {
+    const state = snapshot.val();
+    GAME_ACTIVE = (state === 'open');   // "open" ise oynanabilir, yoksa kilitli
+    console.log("GAME_ACTIVE =", GAME_ACTIVE);
+  });
 </script>
 
 
@@ -684,6 +685,7 @@ const firebaseConfig = {
   <script src="script.js"></script>
 </body>
 </html>
+
 
 
 
