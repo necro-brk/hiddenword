@@ -787,6 +787,7 @@ function createDuelLink() {
 }
 
 
+
   if (!/^[A-ZÇĞİÖŞÜI]+$/.test(word)) {
     if (!confirm("Kelimenizde harf dışı karakter var. Yine de kullanmak istiyor musun?")) {
       return;
@@ -1168,6 +1169,7 @@ window.addEventListener("load", async () => {
   setupUIEvents();
   handleDuelloLinkIfAny();
 });
+
 
 
 
