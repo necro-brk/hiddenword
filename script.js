@@ -521,6 +521,8 @@ function detachKeydown() {
 /* ================== KLAVYE / GİRİŞ İŞLEME ================== */
 
 function handleKey(key) {
+    // Oyun kilitliyse hiçbir tuş çalışmasın
+  if (typeof GAME_ACTIVE !== "undefined" && !GAME_ACTIVE) return;
   if (finished) return;
 
   if (key === "ENTER") {
@@ -560,6 +562,11 @@ function getCurrentGuess() {
 /* ================== TAHMİN DEĞERLENDİRME ================== */
 
 function submitGuess() {
+   // Oyun kapalıysa tahmin göndermesin
+  if (typeof GAME_ACTIVE !== "undefined" && !GAME_ACTIVE) {
+    setStatus("Oyun şu an kapalı. Admin açtığında oynayabilirsin.", "#f97316");
+    return;
+  }
   if (finished) return;
 
   const rawGuess = getCurrentGuess();
@@ -597,4 +604,5 @@ function submitGuess() {
 
     let coreScore = baseCore - attemptPenalty + lengthBonus;
     if (coreScore < 0
+
 
