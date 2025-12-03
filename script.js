@@ -482,21 +482,9 @@ function createKey(label, value, isSpecial) {
   btn.className = "key" + (isSpecial ? " special" : "");
   btn.textContent = label;
   btn.dataset.value = value;
-
-  if (IS_TOUCH_DEVICE) {
-    // Mobilde çift dokunma zoom’unu engelle
-    btn.addEventListener("touchstart", (e) => {
-      e.preventDefault();      // tarayıcıya "bu jesti ben hallediyorum" diyoruz
-      handleKey(value);        // direkt bizim fonksiyon çalışıyor
-    });
-  } else {
-    // Masaüstü için normal tıklama
-    btn.addEventListener("click", () => handleKey(value));
-  }
-
+  btn.addEventListener("click", () => handleKey(value));
   return btn;
 }
-
 
 function attachKeydown() {
   if (keydownHandler) {
@@ -1096,11 +1084,28 @@ window.addEventListener("load", async () => {
   if (window.WORDS_READY) {
     try { await window.WORDS_READY; } catch (e) { console.warn(e); }
   }
+  // iOS'ta çift dokunma zoom'unu engelle
+let lastTouchEnd = 0;
+
+document.addEventListener(
+  "touchend",
+  function (event) {
+    const now = Date.now();
+    if (now - lastTouchEnd <= 300) {
+      // İki dokunuş arası 300ms'den azsa -> muhtemelen double-tap
+      event.preventDefault();
+    }
+    lastTouchEnd = now;
+  },
+  { passive: false }
+);
+
 
   initFirebaseDb();          // 🔥 Firebase Realtime DB'yi başlat
   loadThemeFromStorage();
   setupUIEvents();
   handleDuelloLinkIfAny();
 });
+
 
 
