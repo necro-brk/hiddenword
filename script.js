@@ -43,7 +43,6 @@ let CURRENT_THEME = { ...DEFAULT_THEME };
 let LEADERBOARD_DATA = [];
 
 let playerNameCache = "";
-/* ================== FIREBASE YARDIMCI FONKSİYONLAR ================== */
 
 /* ================== FIREBASE YARDIMCI FONKSİYONLAR ================== */
 
@@ -102,26 +101,6 @@ function getRoomPath(code) {
   return "rooms/" + code;
 }
 
-/* ================== FIREBASE ODA YARDIMCI FONKSİYONLARI ================== */
-
-function initFirebaseDb() {
-  try {
-    if (typeof firebase !== "undefined") {
-      FIREBASE_DB = firebase.database();
-      console.log("Firebase DB hazır");
-    } else {
-      console.warn("firebase globali yok (index.html'deki script sırasını kontrol et)");
-    }
-  } catch (e) {
-    console.warn("Firebase başlatılamadı:", e);
-  }
-}
-
-function getRoomPath(code) {
-  return "rooms/" + code;
-}
-
-
 /* ================== TÜRKÇE BÜYÜK HARF DÖNÜŞTÜRME ================== */
 
 function trUpper(str) {
@@ -150,7 +129,6 @@ function ensureWordSet() {
   }
 
   if (VALID_WORDS instanceof Set) {
-    // Her ihtimale karşı hepsini TR upper’a çeviriyoruz
     WORD_SET = new Set(Array.from(VALID_WORDS).map(trUpper));
     return;
   }
@@ -181,8 +159,6 @@ function pickRandomWord(modeValue) {
     candidates = all.filter(w => w.length === targetLen);
   }
 
-  /* ================== FIREBASE (ODA SİSTEMİ) ================== */
-
   // Hiç yoksa tüm sözlükten seçeceğiz ama yine de uzunluğu zorlayacağız
   if (!candidates.length) {
     console.warn("Bu uzunlukta kelime bulunamadı, tüm sözlükten seçiliyor:", targetLen);
@@ -200,16 +176,13 @@ function pickRandomWord(modeValue) {
     if (word.length > targetLen) {
       word = word.slice(0, targetLen);
     } else if (word.length < targetLen) {
-      // Eksikse A ile doldur (sözlük problemi olsa bile oyun bozulmasın)
       while (word.length < targetLen) {
         word += "A";
       }
     }
   }
 
-  // Son kontrol – her ihtimale karşı
   console.log("Seçilen mod:", modeValue, "Kelime:", word, "Uzunluk:", word.length);
-
   return word;
 }
 
@@ -337,7 +310,7 @@ function saveSettingsFromUI() {
   applyTheme(theme);
 }
 
-/* ================== LEADERBOARD (LOCAL) ================== */
+/* ================== LEADERBOARD (LOCAL + ONLINE) ================== */
 
 function getLBKey(contextId) {
   return LB_PREFIX + (contextId || "default");
@@ -386,7 +359,6 @@ function saveScoreToLeaderboard(name, score, attempts, wordLength, contextId) {
   saveScoreToFirebase(item, contextId);
 }
 
-
 function renderLeaderboard(rows) {
   const tbody = document.getElementById("lb-body");
   if (!tbody) return;
@@ -410,15 +382,15 @@ function renderLeaderboard(rows) {
 /* ================== OYUN DURUMU & BOARD ================== */
 
 function resetGameState(secretWord, contextId) {
-  SECRET_WORD       = secretWord;
-  COLS              = SECRET_WORD.length;
-  ROWS              = 6;
-  tiles             = [];
-  currentRow        = 0;
-  currentCol        = 0;
-  finished          = false;
-  keyButtons        = {};
-  keyState          = {};
+  SECRET_WORD        = secretWord;
+  COLS               = SECRET_WORD.length;
+  ROWS               = 6;
+  tiles              = [];
+  currentRow         = 0;
+  currentCol         = 0;
+  finished           = false;
+  keyButtons         = {};
+  keyState           = {};
   CURRENT_CONTEXT_ID = contextId || "default";
 
   const boardElem = document.getElementById("board");
@@ -669,7 +641,6 @@ function colorRow(rowIndex, guess, result) {
 }
 
 /* ================== MOD BAŞLATMA FONKSİYONLARI ================== */
-
 /* ---- SOLO MOD ---- */
 
 function startSoloFromCreator() {
@@ -684,9 +655,9 @@ function startSoloFromCreator() {
   word = trUpper(word).replace(/[^A-ZÇĞİÖŞÜI]/g, "");
 
   if (word.length > targetLen) {
-    word = word.slice(0, targetLen);       // Uzunsa kes
+    word = word.slice(0, targetLen);
   } else {
-    while (word.length < targetLen) {      // Kısaysa A ile doldur
+    while (word.length < targetLen) {
       word += "A";
     }
   }
@@ -703,7 +674,6 @@ function startSoloFromCreator() {
     badgeRoom.textContent = "";
   }
 
-  // Board burada kelimenin uzunluğuna göre çiziliyor
   resetGameState(word, contextId);
   showScreen("screen-game");
 }
@@ -780,7 +750,7 @@ function handleDuelloLinkIfAny() {
   showScreen("screen-game");
 }
 
-/* ---- GRUP MODU – ODA KODU (şimdilik local demo) ---- */
+/* ---- GRUP MODU – ODA KODU ---- */
 
 function generateRoomCode() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -823,10 +793,7 @@ function createGroupRoom() {
   }
 }
 
-
-
 function joinGroupRoomByCode() {
-  // HTML'deki gerçek id'ler
   const input  = document.getElementById("join-room-code");
   const status = document.getElementById("join-room-status");
   if (!input || !status) return;
@@ -856,7 +823,6 @@ function joinGroupRoomByCode() {
       return;
     }
 
-    // Oda bulundu → state'leri doldur
     CURRENT_ROOM = code;
     SECRET_WORD  = data.secretWord;
     CURRENT_MODE = String(data.mode || data.secretWord.length || 5);
@@ -868,8 +834,6 @@ function joinGroupRoomByCode() {
     status.style.color = "#f97316";
   });
 }
-
-
 
 function startGroupGame() {
   CURRENT_GAME_TYPE = "group";
@@ -1111,11 +1075,3 @@ window.addEventListener("load", async () => {
   setupUIEvents();
   handleDuelloLinkIfAny();
 });
-
-
-
-
-
-
-
-
