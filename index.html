@@ -2,11 +2,14 @@
 <html lang="tr">
 <head>
 <head>
+<head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Hidden Word – Çok Modlu Kelime Oyunu</title>
   <link rel="stylesheet" href="style.css" />
   <style>
+    ...
+
     /* Ekranlar arası geçiş için gerekli minimum CSS */
     .screen-hidden { display: none; }
     .screen-active { display: block; }
@@ -371,11 +374,65 @@ body {
 
 
     @media (max-width: 600px) {
-      #app { padding: 10px; }
-      .panel { padding: 16px 14px; }
+      /* Gövdeyi ortadan yukarı al, mobilde daha doğal dursun */
+      html, body {
+        height: auto;
+      }
+
+      body {
+        align-items: flex-start;
+        padding-top: 8px;
+      }
+
+      /* Uygulama kutusu ekranı tam kullansın, altta klavye için boşluk bırak */
+      #app {
+        width: 100%;
+        max-width: 100%;
+        padding: 8px 8px 80px; /* altta klavyeye yer */
+      }
+
+      /* Tahta biraz küçülsün ki klavye + tahta birlikte sığsın */
+      #board {
+        transform: scale(0.9);
+        transform-origin: top center;
+        margin-top: 4px;
+        margin-bottom: 8px;
+      }
+
+      /* 📱 Klavye: telefon klavyesi gibi altta sabit, tam genişlik */
+      #keyboard {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        max-width: 100%;
+        margin: 0;
+        padding: 6px 6px 10px;
+        background: #020617;
+        box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.7);
+        z-index: 50;
+      }
+
+      .kb-row {
+        gap: 4px;
+      }
+
+      .key {
+        flex: 1 1 auto;       /* tüm satırı paylaşsınlar */
+        min-height: 44px;     /* parmak boyu */
+        padding: 8px 0;
+        font-size: 16px;
+        border-radius: 10px;
+      }
+
+      .key.special {
+        flex: 1.4 1 auto;     /* ENTER / SİL daha geniş */
+        font-size: 14px;
+      }
     }
   </style>
 </head>
+
 <body>
 <div id="app">
 
@@ -609,6 +666,7 @@ const firebaseConfig = {
   <script src="script.js"></script>
 </body>
 </html>
+
 
 
 
