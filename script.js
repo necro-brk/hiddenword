@@ -562,11 +562,12 @@ function getCurrentGuess() {
 /* ================== TAHMİN DEĞERLENDİRME ================== */
 
 function submitGuess() {
-   // Oyun kapalıysa tahmin göndermesin
+  // Oyun kapalıysa tahmin göndermesin
   if (typeof GAME_ACTIVE !== "undefined" && !GAME_ACTIVE) {
     setStatus("Oyun şu an kapalı. Admin açtığında oynayabilirsin.", "#f97316");
     return;
   }
+
   if (finished) return;
 
   const rawGuess = getCurrentGuess();
@@ -590,19 +591,48 @@ function submitGuess() {
   // her tahminde yeşil/sarı istatistiklerini güncelle
   updateLetterStatsFromResult(result);
 
+  // satırı renklendir
   colorRow(currentRow, upperGuess, result);
 
+  // ✅ KELİMEYİ DOĞRU BİLDİYSE
   if (upperGuess === SECRET_WORD) {
-    const attempts   = currentRow + 1;          // kaçıncı denemede bildi
+    const attempts   = currentRow + 1;                               // kaçıncı denemede bildi
     const wordLen    = SECRET_WORD.length;
     const elapsedSec = Math.floor((Date.now() - gameStartTime) / 1000); // saniye
 
-    // --- ÇEKİRDEK SKOR (eski sistemle birleşik) ---
+    // --- ÇEKİRDEK SKOR ---
     const baseCore       = 800;
-    const attemptPenalty = (attempts - 1) * 150;     // her ekstra deneme için ceza
-    const lengthBonus    = (wordLen - 3) * 20;       // uzun kelime bonusu
+    const attemptPenalty = (attempts - 1) * 150;          // her ekstra denemede ceza
+    const lengthBonus    = (wordLen - 3) * 20;            // uzun kelime bonusu
+    const timePenalty    = Math.floor(elapsedSec / 10) * 10; // süreye göre küçük ceza
 
-    let coreScore = baseCore - attemptPenalty + lengthBonus;
-    if (coreScore < 0
+    let coreScore = baseCore - attemptPenalty + lengthBonus - timePenalty;
+    if (coreScore < 0) coreScore = 0;
+
+    const totalScore = coreScore;
+
+    finished = true;
+    setStatus(
+      `Tebrikler! Kelimeyi ${attempts}. denemede buldun. Puanın: ${totalScore}`,
+      "#22c55e"
+    );
+
+    const name = getPlayerName();
+    saveScoreToLeaderboard(name, totalScore, attempts, wordLen, CURRENT_CONTEXT_ID);
+    return;
+  }
+
+  // ❌ BİLEMEDİ VE DEVAM EDİYORUZ
+  currentRow++;
+  currentCol = 0;
+
+  if (currentRow >= ROWS) {
+    finished = true;
+    setStatus(`Oyun bitti! Kelime: ${SECRET_WORD}`, "#ef4444");
+  } else {
+    setStatus("Tahmin yapmaya devam et.", "#e5e7eb");
+  }
+}
+
 
 
