@@ -508,27 +508,61 @@ select {
 
 /* ================== RESPONSIVE ================== */
 
+/* ================== RESPONSIVE ================== */
+
 @media (max-width: 600px) {
   #app {
     padding: 10px;
   }
+
   .panel {
     padding: 14px 12px 16px;
   }
-  .creator-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
+
+  .creator-row,
   .solo-row {
     flex-direction: column;
     align-items: stretch;
   }
+
   .panel-header {
     flex-direction: row;
     align-items: center;
   }
+
+  /* 🔥 MOBİL KLAVYE AYARLARI */
+
+  #keyboard {
+    max-width: 100%;
+    margin: 8px auto 0;
+  }
+
+  .kb-row {
+    gap: 3px;
+  }
+
+  .key {
+    flex: 1 1 auto;        /* Satırı doldursun */
+    min-height: 44px;      /* Parmağa uygun yükseklik */
+    padding: 10px 0;
+    font-size: 16px;       /* Harfler daha büyük */
+    border-radius: 10px;
+  }
+
+  .key.special {
+    flex: 1.5 1 auto;      /* ENTER / SİL biraz daha geniş */
+    font-size: 14px;
+  }
+
+  /* Tahtayı hafif küçült ki klavye için yer açılsın */
+  #board {
+    transform: scale(0.9);
+    transform-origin: top center;
+  }
 }
+
 .hidden {
   display: none !important;
 }
+
 
