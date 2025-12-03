@@ -1,6 +1,5 @@
 /**************************************************
  * Hidden Word – Çok modlu kelime oyunu
- * Bu dosyayı script.js olarak kaydet.
  **************************************************/
 
 /* ================== GLOBAL KONSTANTLAR ================== */
@@ -16,6 +15,7 @@ const DEFAULT_THEME = {
   tileAbsent:    "#111827",
 
 };
+console.log("HiddenWord script LOADED");
 
 /* ================== GLOBAL STATE ================== */
 
@@ -1169,6 +1169,7 @@ window.addEventListener("load", async () => {
   setupUIEvents();
   handleDuelloLinkIfAny();
 });
+
 
 
 
