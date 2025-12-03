@@ -407,6 +407,14 @@ select {
   flex: 1.5 1 46px;
   font-size: 11px;
 }
+/* Geniş enter ve normal backspace */
+.key-enter {
+  flex: 5;          /* yaklaşık 5 tuş genişliği */
+}
+
+.key-backspace {
+  flex: 1.4;        /* silme tuşu biraz geniş */
+}
 
 /* Klavye state renkleri (script.js bunları sınıf olarak ekleyecek) */
 .key-correct {
@@ -572,8 +580,16 @@ select {
     font-size: 14px;
   }
 }
+  .key-enter {
+    flex: 5;
+  }
+
+  .key-backspace {
+    flex: 1.4;
+  }
 
 /* Genel hidden sınıfı */
 .hidden {
   display: none !important;
 }
+
