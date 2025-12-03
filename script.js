@@ -14,8 +14,6 @@ const DEFAULT_THEME = {
   tileCorrect:   "#16a34a",
   tilePresent:   "#eab308",
   tileAbsent:    "#111827",
-  const IS_TOUCH_DEVICE =
-  "ontouchstart" in window || navigator.maxTouchPoints > 0;
 
 };
 
@@ -1085,27 +1083,13 @@ window.addEventListener("load", async () => {
     try { await window.WORDS_READY; } catch (e) { console.warn(e); }
   }
   // iOS'ta çift dokunma zoom'unu engelle
-let lastTouchEnd = 0;
-
-document.addEventListener(
-  "touchend",
-  function (event) {
-    const now = Date.now();
-    if (now - lastTouchEnd <= 300) {
-      // İki dokunuş arası 300ms'den azsa -> muhtemelen double-tap
-      event.preventDefault();
-    }
-    lastTouchEnd = now;
-  },
-  { passive: false }
-);
-
 
   initFirebaseDb();          // 🔥 Firebase Realtime DB'yi başlat
   loadThemeFromStorage();
   setupUIEvents();
   handleDuelloLinkIfAny();
 });
+
 
 
 
