@@ -4,10 +4,7 @@
 <head>
 <head>
   <meta charset="UTF-8" />
-  <meta
-  name="viewport"
-  content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
-/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Hidden Word – Çok Modlu Kelime Oyunu</title>
   <link rel="stylesheet" href="style.css" />
   <style>
@@ -663,32 +660,12 @@ const firebaseConfig = {
     // Firebase'i başlat
     firebase.initializeApp(firebaseConfig);
   </script>
-  
-<!-- 🔥 OYUN KİLİT SİSTEMİ -->
-<script>
-  // Oyun varsayılan olarak kapalı
-  let GAME_ACTIVE = false;
-
-  // Realtime Database'den control/gameState dinle
-  const gameStateRef = firebase.database().ref('control/gameState');
-
-  gameStateRef.on('value', (snapshot) => {
-    const state = snapshot.val();
-    GAME_ACTIVE = (state === 'open');   // "open" ise oynanabilir, yoksa kilitli
-    console.log("GAME_ACTIVE =", GAME_ACTIVE);
-  });
-</script>
-
 
   <!-- Sözlük ve oyun scriptleri -->
   <script src="words_tr.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
-
-
-
-
 
 
 
