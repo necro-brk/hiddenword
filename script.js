@@ -4,13 +4,6 @@
  **************************************************/
 
 /* ================== GLOBAL KONSTANTLAR ================== */
-// Firebase'den gelen oyun durumunu kullanacağız
-// (index.html bunu set ediyor)
-if (typeof GAME_ACTIVE === "undefined") {
-  var GAME_ACTIVE = true;
-}
-
-
 const NAME_KEY  = "hiddenWordPlayerName_v2";
 const THEME_KEY = "hiddenWordTheme_v1";
 const LB_PREFIX = "hiddenWordLB_";
@@ -1093,4 +1086,5 @@ window.addEventListener("load", async () => {
   setupUIEvents();
   handleDuelloLinkIfAny();
 });
+
 
