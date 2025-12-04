@@ -4,6 +4,12 @@
  **************************************************/
 
 /* ================== GLOBAL KONSTANTLAR ================== */
+// Firebase'den gelen oyun durumunu kullanacağız
+// (index.html bunu set ediyor)
+if (typeof GAME_ACTIVE === "undefined") {
+  var GAME_ACTIVE = true;
+}
+
 
 const NAME_KEY  = "hiddenWordPlayerName_v2";
 const THEME_KEY = "hiddenWordTheme_v1";
@@ -502,7 +508,14 @@ function detachKeydown() {
 /* ================== KLAVYE / GİRİŞ İŞLEME ================== */
 
 function handleKey(key) {
+
+  if (!GAME_ACTIVE) {
+    setStatus("Şu an oyun kapalı.", "#f97316");
+    return;
+  }
+
   if (finished) return;
+
 
   if (key === "ENTER") {
     submitGuess();
@@ -541,6 +554,11 @@ function getCurrentGuess() {
 /* ================== TAHMİN DEĞERLENDİRME ================== */
 
 function submitGuess() {
+
+  if (!GAME_ACTIVE) {
+    setStatus("Oyun şu an kapalı. Admin açtığında oynayabilirsin.", "#f97316");
+    return;
+  }
   if (finished) return;
 
   const rawGuess = getCurrentGuess();
@@ -1075,3 +1093,4 @@ window.addEventListener("load", async () => {
   setupUIEvents();
   handleDuelloLinkIfAny();
 });
+
