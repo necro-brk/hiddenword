@@ -660,12 +660,33 @@ const firebaseConfig = {
     // Firebase'i başlat
     firebase.initializeApp(firebaseConfig);
   </script>
+  <script>
+  // Varsayılan olarak oyun kapalı başlamasın (açık mod)
+  let GAME_ACTIVE = true;
+
+  // Firebase gameState takibi
+  const gameStateRef = firebase.database().ref("control/gameState");
+
+  gameStateRef.on("value", (snap) => {
+    const val = snap.val();
+    GAME_ACTIVE = (val === "open");
+    console.log("GAME ACTIVE =", GAME_ACTIVE);
+
+    if (!GAME_ACTIVE) {
+      document.body.style.filter = "grayscale(100%)"; // isteğe bağlı uyarı
+    } else {
+      document.body.style.filter = "none";
+    }
+  });
+</script>
+
 
   <!-- Sözlük ve oyun scriptleri -->
   <script src="words_tr.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
+
 
 
 
