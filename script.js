@@ -38,18 +38,13 @@ let keyButtons   = {};
 let keyState     = {};
 let keydownHandler = null;
 
-// Skor istatistikleri
-let gameStartTime    = 0;  // oyunun başlangıç zamanı (ms)
-let totalGreenCount  = 0;  // tüm oyun boyunca yeşil harf sayısı
-let totalYellowCount = 0;  // tüm oyun boyunca sarı harf sayısı
-
-let WORD_SET        = null;
-let CURRENT_THEME   = { ...DEFAULT_THEME };
+let WORD_SET      = null;
+let CURRENT_THEME = { ...DEFAULT_THEME };
 let LEADERBOARD_DATA = [];
 
 let playerNameCache = "";
 
-/* ==================  YARDIMCI FONKSİYONLAR ================== */
+/* ================== FIREBASE YARDIMCI FONKSİYONLAR ================== */
 
 function initFirebaseDb() {
   try {
@@ -398,11 +393,6 @@ function resetGameState(secretWord, contextId) {
   keyState           = {};
   CURRENT_CONTEXT_ID = contextId || "default";
 
-  // skor istatistiklerini sıfırla
-  gameStartTime    = Date.now();
-  totalGreenCount  = 0;
-  totalYellowCount = 0;
-
   const boardElem = document.getElementById("board");
   boardElem.style.setProperty("--cols", COLS);
   boardElem.innerHTML = "";
@@ -442,17 +432,20 @@ function buildKeyboard() {
   keyButtons = {};
   keyState   = {};
 
-  // iPhone Türkçe Q düzeni
-  const rows = [
+  const layout = [
     "QWERTYUIOPĞÜ",
     "ASDFGHJKLŞİ",
-    "ZXCVBNMÖÇ",
+    "ZXCVBNMÖÇ"
   ];
 
-  // ÜSTTEKİ 3 SATIR
-  rows.forEach((row, idx) => {
+  layout.forEach((row, idx) => {
     const rowDiv = document.createElement("div");
     rowDiv.className = "kb-row";
+
+    if (idx === 2) {
+      const enterBtn = createKey("ENTER", "ENTER", true);
+      rowDiv.appendChild(enterBtn);
+    }
 
     for (const ch of row) {
       const btn = createKey(ch, ch, false);
@@ -460,25 +453,13 @@ function buildKeyboard() {
       keyButtons[ch] = btn;
     }
 
-    // üçüncü satırın sağına SİL tuşu
     if (idx === 2) {
       const backBtn = createKey("⌫", "BACK", true);
-      backBtn.classList.add("key-backspace");
       rowDiv.appendChild(backBtn);
     }
 
     keyboardElem.appendChild(rowDiv);
   });
-
-  // EN ALTA GENİŞ ENTER SATIRI
-  const enterRow = document.createElement("div");
-  enterRow.className = "kb-row";
-
-  const enterBtn = createKey("ENTER", "ENTER", true);
-  enterBtn.classList.add("key-enter");
-  enterRow.appendChild(enterBtn);
-
-  keyboardElem.appendChild(enterRow);
 }
 
 function createKey(label, value, isSpecial) {
@@ -521,8 +502,6 @@ function detachKeydown() {
 /* ================== KLAVYE / GİRİŞ İŞLEME ================== */
 
 function handleKey(key) {
-    // Oyun kilitliyse hiçbir tuş çalışmasın
-  if (typeof GAME_ACTIVE !== "undefined" && !GAME_ACTIVE) return;
   if (finished) return;
 
   if (key === "ENTER") {
@@ -562,12 +541,6 @@ function getCurrentGuess() {
 /* ================== TAHMİN DEĞERLENDİRME ================== */
 
 function submitGuess() {
-  // Oyun kapalıysa tahmin göndermesin
-  if (typeof GAME_ACTIVE !== "undefined" && !GAME_ACTIVE) {
-    setStatus("Oyun şu an kapalı. Admin açtığında oynayabilirsin.", "#f97316");
-    return;
-  }
-
   if (finished) return;
 
   const rawGuess = getCurrentGuess();
@@ -587,52 +560,518 @@ function submitGuess() {
   }
 
   const result = evaluateGuess(upperGuess, SECRET_WORD);
-
-  // her tahminde yeşil/sarı istatistiklerini güncelle
-  updateLetterStatsFromResult(result);
-
-  // satırı renklendir
   colorRow(currentRow, upperGuess, result);
 
-  // ✅ KELİMEYİ DOĞRU BİLDİYSE
   if (upperGuess === SECRET_WORD) {
-    const attempts   = currentRow + 1;                               // kaçıncı denemede bildi
-    const wordLen    = SECRET_WORD.length;
-    const elapsedSec = Math.floor((Date.now() - gameStartTime) / 1000); // saniye
-
-    // --- ÇEKİRDEK SKOR ---
-    const baseCore       = 800;
-    const attemptPenalty = (attempts - 1) * 150;          // her ekstra denemede ceza
-    const lengthBonus    = (wordLen - 3) * 20;            // uzun kelime bonusu
-    const timePenalty    = Math.floor(elapsedSec / 10) * 10; // süreye göre küçük ceza
-
-    let coreScore = baseCore - attemptPenalty + lengthBonus - timePenalty;
-    if (coreScore < 0) coreScore = 0;
-
-    const totalScore = coreScore;
-
-    finished = true;
-    setStatus(
-      `Tebrikler! Kelimeyi ${attempts}. denemede buldun. Puanın: ${totalScore}`,
-      "#22c55e"
+    const attempts = currentRow + 1;
+    const base = 1200;
+    const score = Math.max(
+      10,
+      base - (attempts - 1) * 150 - (SECRET_WORD.length - 3) * 20
     );
-
     const name = getPlayerName();
-    saveScoreToLeaderboard(name, totalScore, attempts, wordLen, CURRENT_CONTEXT_ID);
+    saveScoreToLeaderboard(name, score, attempts, SECRET_WORD.length, CURRENT_CONTEXT_ID);
+
+    setStatus(`Tebrikler, kelimeyi buldun! 🎉 Skorun: ${score}`, "#22c55e");
+    finished = true;
     return;
   }
 
-  // ❌ BİLEMEDİ VE DEVAM EDİYORUZ
+  if (currentRow === ROWS - 1) {
+    setStatus(`Bitti! Gizli kelime: ${SECRET_WORD}`, "#f97316");
+    finished = true;
+    return;
+  }
+
   currentRow++;
   currentCol = 0;
+  setStatus("Yeni bir tahmin yap!");
+}
 
-  if (currentRow >= ROWS) {
-    finished = true;
-    setStatus(`Oyun bitti! Kelime: ${SECRET_WORD}`, "#ef4444");
-  } else {
-    setStatus("Tahmin yapmaya devam et.", "#e5e7eb");
+function evaluateGuess(guess, secret) {
+  const res       = Array(COLS).fill("absent");
+  const secretArr = secret.split("");
+  const used      = new Array(COLS).fill(false);
+
+  for (let i = 0; i < COLS; i++) {
+    if (guess[i] === secret[i]) {
+      res[i]  = "correct";
+      used[i] = true;
+    }
+  }
+
+  for (let i = 0; i < COLS; i++) {
+    if (res[i] === "correct") continue;
+    const ch = guess[i];
+    let found = false;
+    for (let j = 0; j < COLS; j++) {
+      if (!used[j] && secretArr[j] === ch) {
+        used[j] = true;
+        found = true;
+        break;
+      }
+    }
+    if (found) res[i] = "present";
+  }
+
+  return res;
+}
+
+function colorRow(rowIndex, guess, result) {
+  for (let c = 0; c < COLS; c++) {
+    const tile = tiles[rowIndex][c];
+    tile.classList.remove("tile-filled", "tile-correct", "tile-present", "tile-absent");
+
+    const state = result[c];
+    tile.classList.add("tile-" + state);
+
+    const ch   = guess[c];
+    const prev = keyState[ch];
+    if (!prev || prev === "absent" || (prev === "present" && state === "correct")) {
+      keyState[ch] = state;
+      const btn = keyButtons[ch];
+      if (btn) {
+        btn.classList.remove("key-correct", "key-present", "key-absent");
+        if (state === "correct")      btn.classList.add("key-correct");
+        else if (state === "present") btn.classList.add("key-present");
+        else                          btn.classList.add("key-absent");
+      }
+    }
   }
 }
 
+/* ================== MOD BAŞLATMA FONKSİYONLARI ================== */
+/* ---- SOLO MOD ---- */
 
+function startSoloFromCreator() {
+  const modeSelect = document.getElementById("mode-select");
+  const modeStr    = modeSelect ? modeSelect.value : "5"; // "3","4","5","6","7","8"
+  const targetLen  = parseInt(modeStr, 10) || 5;
 
+  // Sözlükten kelime çek
+  let word = pickRandomWord(modeStr);
+
+  // Her ihtimale karşı temizle + zorunlu olarak seçilen uzunluğa ayarla
+  word = trUpper(word).replace(/[^A-ZÇĞİÖŞÜI]/g, "");
+
+  if (word.length > targetLen) {
+    word = word.slice(0, targetLen);
+  } else {
+    while (word.length < targetLen) {
+      word += "A";
+    }
+  }
+
+  CURRENT_MODE = String(targetLen);
+  const contextId = `solo:${CURRENT_MODE}`;
+
+  const badgeMode = document.getElementById("badge-game-mode");
+  const badgeRoom = document.getElementById("badge-room-info");
+  if (badgeMode) {
+    badgeMode.textContent = `Solo · ${targetLen} harfli`;
+  }
+  if (badgeRoom) {
+    badgeRoom.textContent = "";
+  }
+
+  resetGameState(word, contextId);
+  showScreen("screen-game");
+}
+
+/* ---- DÜELLO MODU (LINK OLUŞTURMA) ---- */
+
+function createDuelLink() {
+  const secretInput = document.getElementById("secret-input");
+  const modeSelect  = document.getElementById("mode-select");
+  const linkWrap    = document.getElementById("generated-link-wrap");
+  const linkInput   = document.getElementById("generated-link");
+
+  if (!secretInput || !modeSelect || !linkWrap || !linkInput) return;
+
+  let word = (secretInput.value || "").trim();
+  const mode = modeSelect.value || "5";
+
+  if (!word) {
+    alert("Lütfen bir gizli kelime yaz.");
+    return;
+  }
+
+  word = word.replace(/\s+/g, "");
+  word = trUpper(word);
+
+  const len = parseInt(mode, 10) || word.length;
+  if (word.length !== len) {
+    if (!confirm(`Seçili mod ${len} harfli, kelimeniz ${word.length} harfli. Yine de devam edilsin mi?`)) {
+      return;
+    }
+  }
+
+  if (!/^[A-ZÇĞİÖŞÜI]+$/.test(word)) {
+    if (!confirm("Kelimenizde harf dışı karakter var. Yine de kullanmak istiyor musun?")) {
+      return;
+    }
+  }
+
+  const code = encodeSecret(word);
+  const url  = `${window.location.origin}${window.location.pathname}?code=${code}&mode=${len}`;
+  linkInput.value = url;
+  linkWrap.style.display = "block";
+}
+
+/* ---- DÜELLO MODU (LINK İLE GİRENLER) ---- */
+
+function handleDuelloLinkIfAny() {
+  const codeParam = getQueryParam("code");
+  if (!codeParam) return;
+
+  const modeParam = getQueryParam("mode"); // "3".."8" olabilir
+  let secretWord  = decodeSecret(codeParam);
+  secretWord      = trUpper(secretWord).replace(/\s+/g, "");
+
+  if (!/^[A-ZÇĞİÖŞÜI]+$/.test(secretWord) || secretWord.length < 2) {
+    secretWord = "HATA";
+  }
+
+  CURRENT_MODE      = modeParam || String(secretWord.length);
+  CURRENT_GAME_TYPE = "duel-guess";
+
+  const contextId = `duel-link:${CURRENT_MODE}:${codeParam}`;
+
+  const badgeMode = document.getElementById("badge-game-mode");
+  const badgeRoom = document.getElementById("badge-room-info");
+  if (badgeMode) {
+    badgeMode.textContent = `Düello · ${secretWord.length} harfli – Tahmin`;
+  }
+  if (badgeRoom) {
+    badgeRoom.textContent = "Bu linke özel oyun";
+  }
+
+  resetGameState(secretWord, contextId);
+  showScreen("screen-game");
+}
+
+/* ---- GRUP MODU – ODA KODU ---- */
+
+function generateRoomCode() {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let code = "";
+  for (let i = 0; i < 5; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return code;
+}
+
+function createGroupRoom() {
+  const modeSelect = document.getElementById("group-mode-select");
+  const mode       = modeSelect ? modeSelect.value : "5";
+  CURRENT_MODE     = mode;
+
+  ensureWordSet();
+  const word     = pickRandomWord(mode);
+  const roomCode = generateRoomCode();
+  CURRENT_ROOM   = roomCode;
+  SECRET_WORD    = word;
+
+  // 🔥 Oda bilgisini Firebase'e yaz
+  if (FIREBASE_DB) {
+    const path = getRoomPath(roomCode);
+    FIREBASE_DB.ref(path).set({
+      secretWord: word,
+      mode: parseInt(mode, 10) || word.length,
+      createdAt: Date.now()
+    }).catch(err => {
+      console.warn("Oda Firebase'e yazılamadı:", err);
+    });
+  }
+
+  const codeElem  = document.getElementById("group-room-code");
+  const resultBox = document.getElementById("group-room-result");
+  if (codeElem && resultBox) {
+    codeElem.textContent = roomCode;
+    resultBox.classList.remove("screen-hidden");
+    resultBox.style.display = "block";
+  }
+}
+
+function joinGroupRoomByCode() {
+  const input  = document.getElementById("join-room-code");
+  const status = document.getElementById("join-room-status");
+  if (!input || !status) return;
+
+  const code = (input.value || "").trim().toUpperCase();
+  if (!code || code.length < 4) {
+    status.textContent = "Geçerli bir oda kodu gir.";
+    status.style.color = "#f97316";
+    return;
+  }
+
+  if (!FIREBASE_DB) {
+    status.textContent = "Sunucuya bağlanırken hata oluştu (Firebase yok).";
+    status.style.color = "#f97316";
+    return;
+  }
+
+  status.textContent = "Oda aranıyor...";
+  status.style.color = "#e5e7eb";
+
+  const path = getRoomPath(code);
+  FIREBASE_DB.ref(path).once("value").then(snapshot => {
+    const data = snapshot.val();
+    if (!data || !data.secretWord) {
+      status.textContent = "Bu kodla oluşturulmuş bir oda bulunamadı.";
+      status.style.color = "#f97316";
+      return;
+    }
+
+    CURRENT_ROOM = code;
+    SECRET_WORD  = data.secretWord;
+    CURRENT_MODE = String(data.mode || data.secretWord.length || 5);
+
+    startGroupGame();
+  }).catch(err => {
+    console.warn("Oda verisi okunamadı:", err);
+    status.textContent = "Odaya bağlanırken bir hata oluştu.";
+    status.style.color = "#f97316";
+  });
+}
+
+function startGroupGame() {
+  CURRENT_GAME_TYPE = "group";
+  const contextId   = `group:${CURRENT_ROOM}`;
+
+  const badgeMode = document.getElementById("badge-game-mode");
+  const badgeRoom = document.getElementById("badge-room-info");
+  if (badgeMode) {
+    badgeMode.textContent = `Grup · ${SECRET_WORD.length} harfli`;
+  }
+  if (badgeRoom) {
+    badgeRoom.textContent = `Oda kodu: ${CURRENT_ROOM}`;
+  }
+
+  resetGameState(SECRET_WORD, contextId);
+  showScreen("screen-game");
+}
+
+/* ================== UYGULAMA BAŞLATMA ================== */
+
+function setupUIEvents() {
+  /* Ana menü */
+  const btnHomeSolo     = document.getElementById("btn-home-solo");
+  const btnHomeDuel     = document.getElementById("btn-home-duel");
+  const btnHomeGroup    = document.getElementById("btn-home-group");
+  const btnHomeSettings = document.getElementById("btn-home-settings");
+
+  if (btnHomeSolo) {
+    btnHomeSolo.addEventListener("click", () => {
+      CURRENT_GAME_TYPE = "solo";
+      showScreen("screen-creator");
+      const title = document.getElementById("creator-title");
+      if (title) title.textContent = "Solo Modu";
+
+      const secretField = document.querySelector(".creator-field input#secret-input")?.parentElement;
+      const linkWrap    = document.getElementById("generated-link-wrap");
+      if (secretField) secretField.style.display = "none";
+      if (linkWrap)    linkWrap.style.display    = "none";
+    });
+  }
+
+  if (btnHomeDuel) {
+    btnHomeDuel.addEventListener("click", () => {
+      CURRENT_GAME_TYPE = "duel-create";
+      showScreen("screen-creator");
+      const title = document.getElementById("creator-title");
+      if (title) title.textContent = "Düello Modu – Link Oluştur";
+
+      const secretField = document.querySelector(".creator-field input#secret-input")?.parentElement;
+      const linkWrap    = document.getElementById("generated-link-wrap");
+      if (secretField) secretField.style.display = "block";
+      if (linkWrap)    linkWrap.style.display    = "none";
+    });
+  }
+
+  if (btnHomeGroup) {
+    btnHomeGroup.addEventListener("click", () => {
+      showScreen("screen-group-menu");
+    });
+  }
+
+  if (btnHomeSettings) {
+    btnHomeSettings.addEventListener("click", () => {
+      loadSettingsIntoUI();
+      showScreen("screen-settings");
+    });
+  }
+
+  /* Creator screen back */
+  const btnBackCreator = document.getElementById("btn-back-from-creator");
+  if (btnBackCreator) {
+    btnBackCreator.addEventListener("click", () => {
+      showScreen("screen-home");
+    });
+  }
+
+  /* Group menu back */
+  const btnBackGroupMenu = document.getElementById("btn-back-from-group-menu");
+  if (btnBackGroupMenu) {
+    btnBackGroupMenu.addEventListener("click", () => {
+      showScreen("screen-home");
+    });
+  }
+
+  /* Group create */
+  const btnGroupCreate = document.getElementById("btn-group-create");
+  if (btnGroupCreate) {
+    btnGroupCreate.addEventListener("click", () => {
+      const resultBox = document.getElementById("group-room-result");
+      if (resultBox) resultBox.classList.add("screen-hidden");
+      showScreen("screen-group-create");
+    });
+  }
+
+  const btnCreateRoom = document.getElementById("btn-create-room");
+  if (btnCreateRoom) {
+    btnCreateRoom.addEventListener("click", () => {
+      createGroupRoom();
+    });
+  }
+
+  const btnCopyRoomCode = document.getElementById("btn-copy-room-code");
+  if (btnCopyRoomCode) {
+    btnCopyRoomCode.addEventListener("click", () => {
+      const codeElem = document.getElementById("group-room-code");
+      if (!codeElem) return;
+      const code = codeElem.textContent || "";
+      if (!code) return;
+      navigator.clipboard.writeText(code).then(() => {
+        btnCopyRoomCode.textContent = "Kopyalandı ✔";
+        setTimeout(() => btnCopyRoomCode.textContent = "Kodu Kopyala", 1500);
+      });
+    });
+  }
+
+  const btnEnterCreatedRoom = document.getElementById("btn-enter-created-room");
+  if (btnEnterCreatedRoom) {
+    btnEnterCreatedRoom.addEventListener("click", () => {
+      if (!SECRET_WORD || !CURRENT_ROOM) {
+        alert("Önce oda oluştur.");
+        return;
+      }
+      startGroupGame();
+    });
+  }
+
+  /* Group create ekranından geri */
+  const btnBackGroupCreate = document.getElementById("btn-back-from-group-create");
+  if (btnBackGroupCreate) {
+    btnBackGroupCreate.addEventListener("click", () => {
+      showScreen("screen-group-menu");
+    });
+  }
+
+  /* Group join */
+  const btnGroupJoin = document.getElementById("btn-group-join");
+  if (btnGroupJoin) {
+    btnGroupJoin.addEventListener("click", () => {
+      const status = document.getElementById("join-room-status");
+      if (status) {
+        status.textContent = "";
+      }
+      showScreen("screen-group-join");
+    });
+  }
+
+  const btnBackGroupJoin = document.getElementById("btn-back-from-group-join");
+  if (btnBackGroupJoin) {
+    btnBackGroupJoin.addEventListener("click", () => {
+      showScreen("screen-group-menu");
+    });
+  }
+
+  const btnJoinRoomNow = document.getElementById("btn-join-room-now");
+  if (btnJoinRoomNow) {
+    btnJoinRoomNow.addEventListener("click", () => {
+      joinGroupRoomByCode();
+    });
+  }
+
+  /* Solo start */
+  const soloStartBtn = document.getElementById("solo-start-btn");
+  if (soloStartBtn) {
+    soloStartBtn.addEventListener("click", () => {
+      startSoloFromCreator();
+    });
+  }
+
+  /* Duel link create */
+  const createLinkBtn = document.getElementById("create-link-btn");
+  if (createLinkBtn) {
+    createLinkBtn.addEventListener("click", () => {
+      createDuelLink();
+    });
+  }
+
+  const copyLinkBtn = document.getElementById("copy-link-btn");
+  if (copyLinkBtn) {
+    copyLinkBtn.addEventListener("click", () => {
+      const linkInput = document.getElementById("generated-link");
+      if (!linkInput) return;
+      linkInput.select();
+      document.execCommand("copy");
+      copyLinkBtn.textContent = "Kopyalandı ✔";
+      setTimeout(() => copyLinkBtn.textContent = "Kopyala", 1500);
+    });
+  }
+
+  /* Game screen back */
+  const btnBackGame = document.getElementById("btn-back-from-game");
+  if (btnBackGame) {
+    btnBackGame.addEventListener("click", () => {
+      detachKeydown();
+      showScreen("screen-home");
+    });
+  }
+
+  /* Settings back & actions */
+  const btnBackSettings = document.getElementById("btn-back-from-settings");
+  if (btnBackSettings) {
+    btnBackSettings.addEventListener("click", () => {
+      showScreen("screen-home");
+    });
+  }
+
+  const btnSettingsReset = document.getElementById("btn-settings-reset");
+  if (btnSettingsReset) {
+    btnSettingsReset.addEventListener("click", () => {
+      applyTheme(DEFAULT_THEME);
+      loadSettingsIntoUI();
+    });
+  }
+
+  const btnSettingsSave = document.getElementById("btn-settings-save");
+  if (btnSettingsSave) {
+    btnSettingsSave.addEventListener("click", () => {
+      saveSettingsFromUI();
+      showScreen("screen-home");
+    });
+  }
+
+  const changeNameBtn = document.getElementById("change-name-btn");
+  if (changeNameBtn) {
+    changeNameBtn.addEventListener("click", () => {
+      changePlayerName();
+    });
+  }
+}
+
+/* ================== WINDOW LOAD ================== */
+
+window.addEventListener("load", async () => {
+  if (window.WORDS_READY) {
+    try { await window.WORDS_READY; } catch (e) { console.warn(e); }
+  }
+
+  initFirebaseDb();          // 🔥 Firebase Realtime DB'yi başlat
+  loadThemeFromStorage();
+  setupUIEvents();
+  handleDuelloLinkIfAny();
+});
