@@ -866,6 +866,16 @@ function startGroupGame() {
 /* ================== UYGULAMA BAŞLATMA ================== */
 
 function setupUIEvents() {
+
+  // Oyun açık mı kontrolü (ana menü için)
+  function guardGameActive() {
+    if (typeof GAME_ACTIVE !== "undefined" && !GAME_ACTIVE) {
+      alert("Şu an oyun kapalı. Admin açtığında tekrar deneyebilirsin.");
+      return false;
+    }
+    return true;
+  }
+
   /* Ana menü */
   const btnHomeSolo     = document.getElementById("btn-home-solo");
   const btnHomeDuel     = document.getElementById("btn-home-duel");
@@ -874,8 +884,11 @@ function setupUIEvents() {
 
   if (btnHomeSolo) {
     btnHomeSolo.addEventListener("click", () => {
+      if (!guardGameActive()) return;
+
       CURRENT_GAME_TYPE = "solo";
       showScreen("screen-creator");
+
       const title = document.getElementById("creator-title");
       if (title) title.textContent = "Solo Modu";
 
@@ -888,6 +901,8 @@ function setupUIEvents() {
 
   if (btnHomeDuel) {
     btnHomeDuel.addEventListener("click", () => {
+      if (!guardGameActive()) return;
+
       CURRENT_GAME_TYPE = "duel-create";
       showScreen("screen-creator");
       const title = document.getElementById("creator-title");
@@ -902,16 +917,19 @@ function setupUIEvents() {
 
   if (btnHomeGroup) {
     btnHomeGroup.addEventListener("click", () => {
+      if (!guardGameActive()) return;
       showScreen("screen-group-menu");
     });
   }
 
   if (btnHomeSettings) {
     btnHomeSettings.addEventListener("click", () => {
+      if (!guardGameActive()) return;
       loadSettingsIntoUI();
       showScreen("screen-settings");
     });
   }
+
 
   /* Creator screen back */
   const btnBackCreator = document.getElementById("btn-back-from-creator");
@@ -1093,6 +1111,7 @@ window.addEventListener("load", async () => {
   setupUIEvents();
   handleDuelloLinkIfAny();
 });
+
 
 
 
