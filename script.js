@@ -581,7 +581,17 @@ function submitGuess() {
       base - (attempts - 1) * 150 - (SECRET_WORD.length - 3) * 20
     );
     const name = getPlayerName();
-    saveScoreToLeaderboard(name, score, attempts, SECRET_WORD.length, CURRENT_CONTEXT_ID);
+
+    // 🔒 Solo modda leaderboard'a yazma
+    if (CURRENT_GAME_TYPE !== "solo") {
+      saveScoreToLeaderboard(
+        name,
+        score,
+        attempts,
+        SECRET_WORD.length,
+        CURRENT_CONTEXT_ID
+      );
+    }
 
     setStatus(`Tebrikler, kelimeyi buldun! 🎉 Skorun: ${score}`, "#22c55e");
     finished = true;
@@ -598,6 +608,7 @@ function submitGuess() {
   currentCol = 0;
   setStatus("Yeni bir tahmin yap!");
 }
+
 
 function evaluateGuess(guess, secret) {
   const res       = Array(COLS).fill("absent");
@@ -1163,6 +1174,7 @@ window.addEventListener("load", async () => {
   setupUIEvents();
   handleDuelloLinkIfAny();
 });
+
 
 
 
