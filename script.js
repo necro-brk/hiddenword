@@ -976,13 +976,20 @@ function setupUIEvents() {
     });
   }
 
-  /* Creator screen back */
-  const btnBackCreator = document.getElementById("btn-back-from-creator");
-  if (btnBackCreator) {
-    btnBackCreator.addEventListener("click", () => {
-      showScreen("screen-home");
-    });
-  }
+/* Creator screen back */
+const btnBackCreator = document.getElementById("btn-back-from-creator");
+if (btnBackCreator) {
+  btnBackCreator.addEventListener("click", () => {
+    showScreen("screen-home");
+
+    // Düello kodu alanını ana menüye dönünce gizle
+    const duelJoinWrap = document.getElementById("duel-join-wrap");
+    if (duelJoinWrap) {
+      duelJoinWrap.style.display = "none";
+    }
+  });
+}
+
 
   /* Group menu back */
   const btnBackGroupMenu = document.getElementById("btn-back-from-group-menu");
@@ -1156,6 +1163,7 @@ window.addEventListener("load", async () => {
   setupUIEvents();
   handleDuelloLinkIfAny();
 });
+
 
 
 
