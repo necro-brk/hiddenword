@@ -753,6 +753,43 @@ function handleDuelloLinkIfAny() {
   showScreen("screen-game");
 }
 
+function joinDuelByCode() {
+  const input = document.getElementById("duel-join-code");
+  if (!input) return;
+
+  const codeParam = (input.value || "").trim();
+  if (!codeParam) {
+    alert("Geçerli bir oyun kodu gir.");
+    return;
+  }
+
+  let secretWord = decodeSecret(codeParam);
+  secretWord     = trUpper(secretWord).replace(/\s+/g, "");
+
+  if (!/^[A-ZÇĞİÖŞÜI]+$/.test(secretWord) || secretWord.length < 2) {
+    alert("Bu koddan geçerli bir kelime çözülemedi.");
+    return;
+  }
+
+  CURRENT_MODE      = String(secretWord.length);
+  CURRENT_GAME_TYPE = "duel-guess";
+
+  const contextId = `duel-code:${CURRENT_MODE}:${codeParam}`;
+
+  const badgeMode = document.getElementById("badge-game-mode");
+  const badgeRoom = document.getElementById("badge-room-info");
+  if (badgeMode) {
+    badgeMode.textContent = `Düello · ${secretWord.length} harfli – Tahmin`;
+  }
+  if (badgeRoom) {
+    badgeRoom.textContent = "Arkadaşının gönderdiği oyun kodu";
+  }
+
+  resetGameState(secretWord, contextId);
+  showScreen("screen-game");
+}
+
+
 /* ---- GRUP MODU – ODA KODU ---- */
 
 function generateRoomCode() {
@@ -1052,6 +1089,14 @@ if (soloStartBtn) {
       setTimeout(() => copyLinkBtn.textContent = "Kopyala", 1500);
     });
   }
+      // Düello: oyun kodu ile giriş
+  const btnDuelJoinNow = document.getElementById("btn-duel-join-now");
+  if (btnDuelJoinNow) {
+    btnDuelJoinNow.addEventListener("click", () => {
+      joinDuelByCode();
+    });
+  }
+
 
   /* Game screen back */
   const btnBackGame = document.getElementById("btn-back-from-game");
@@ -1106,6 +1151,7 @@ window.addEventListener("load", async () => {
   setupUIEvents();
   handleDuelloLinkIfAny();
 });
+
 
 
 
