@@ -671,12 +671,7 @@ const firebaseConfig = {
     const val = snap.val();
     GAME_ACTIVE = (val === "open");
     console.log("GAME ACTIVE =", GAME_ACTIVE);
-
-    if (!GAME_ACTIVE) {
-      document.body.style.filter = "grayscale(100%)"; // isteğe bağlı uyarı
-    } else {
-      document.body.style.filter = "none";
-    }
+    
   });
 </script>
 
@@ -686,6 +681,7 @@ const firebaseConfig = {
   <script src="script.js"></script>
 </body>
 </html>
+
 
 
 
