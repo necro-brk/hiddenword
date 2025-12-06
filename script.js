@@ -894,8 +894,9 @@ function startGroupGame() {
 
 /* ================== UYGULAMA BAŞLATMA ================== */
 
-function setupUIEvents() {
+/* ================== UYGULAMA BAŞLATMA ================== */
 
+function setupUIEvents() {
   // Oyun açık mı kontrolü (ana menü için)
   function guardGameActive() {
     if (typeof GAME_ACTIVE !== "undefined" && !GAME_ACTIVE) {
@@ -904,14 +905,13 @@ function setupUIEvents() {
     }
     return true;
   }
-  function setupUIEvents() {
 
   // Creator ekranındaki "Oyun modu" alanı (dropdown'un parent'ı)
-  const modeField = document.querySelector(".creator-field label[for='mode-select']")?.parentElement;
+  const modeField    =
+    document.querySelector(".creator-field label[for='mode-select']")?.parentElement;
 
-  // Düello için "kod ile giriş" alanı (bunu birazdan HTML'de ekleyeceğiz)
+  // Düello için "kod ile giriş" alanı
   const duelJoinWrap = document.getElementById("duel-join-wrap");
-
 
   /* Ana menü */
   const btnHomeSolo     = document.getElementById("btn-home-solo");
@@ -919,38 +919,47 @@ function setupUIEvents() {
   const btnHomeGroup    = document.getElementById("btn-home-group");
   const btnHomeSettings = document.getElementById("btn-home-settings");
 
-if (btnHomeSolo) {
-  btnHomeSolo.addEventListener("click", () => {
-    CURRENT_GAME_TYPE = "solo";
-    showScreen("screen-creator");
-    const title = document.getElementById("creator-title");
-    if (title) title.textContent = "Solo Modu";
+  if (btnHomeSolo) {
+    btnHomeSolo.addEventListener("click", () => {
+      if (!guardGameActive()) return;
 
-    const secretField = document.querySelector(".creator-field input#secret-input")?.parentElement;
-    const linkWrap    = document.getElementById("generated-link-wrap");
-    if (secretField)  secretField.style.display = "none";
-    if (linkWrap)     linkWrap.style.display    = "none";
-    if (modeField)    modeField.style.display   = "block";   // 🔹 SOLO'da dropdown görünsün
-    if (duelJoinWrap) duelJoinWrap.style.display = "none";   // 🔹 Düello kod girişi gizli
-  });
-}
+      CURRENT_GAME_TYPE = "solo";
+      showScreen("screen-creator");
 
+      const title = document.getElementById("creator-title");
+      if (title) title.textContent = "Solo Modu";
 
-if (btnHomeDuel) {
-  btnHomeDuel.addEventListener("click", () => {
-    CURRENT_GAME_TYPE = "duel-create";
-    showScreen("screen-creator");
-    const title = document.getElementById("creator-title");
-    if (title) title.textContent = "Düello Modu";
+      const secretField =
+        document.querySelector(".creator-field input#secret-input")?.parentElement;
+      const linkWrap = document.getElementById("generated-link-wrap");
 
-    const secretField = document.querySelector(".creator-field input#secret-input")?.parentElement;
-    const linkWrap    = document.getElementById("generated-link-wrap");
-    if (secretField)  secretField.style.display = "block";
-    if (linkWrap)     linkWrap.style.display    = "none";
-    if (modeField)    modeField.style.display   = "none";    // 🔹 DÜELLO'da dropdown KAYBOL
-    if (duelJoinWrap) duelJoinWrap.style.display = "block";  // 🔹 Düello kod girişi GÖRÜNÜR
-  });
-}
+      if (secretField)  secretField.style.display  = "none";
+      if (linkWrap)     linkWrap.style.display     = "none";
+      if (modeField)    modeField.style.display    = "block";   // Solo'da dropdown açık
+      if (duelJoinWrap) duelJoinWrap.style.display = "none";    // Kod girişi gizli
+    });
+  }
+
+  if (btnHomeDuel) {
+    btnHomeDuel.addEventListener("click", () => {
+      if (!guardGameActive()) return;
+
+      CURRENT_GAME_TYPE = "duel-create";
+      showScreen("screen-creator");
+
+      const title = document.getElementById("creator-title");
+      if (title) title.textContent = "Düello Modu";
+
+      const secretField =
+        document.querySelector(".creator-field input#secret-input")?.parentElement;
+      const linkWrap = document.getElementById("generated-link-wrap");
+
+      if (secretField)  secretField.style.display  = "block";
+      if (linkWrap)     linkWrap.style.display     = "none";
+      if (modeField)    modeField.style.display    = "none";    // Düello'da dropdown yok
+      if (duelJoinWrap) duelJoinWrap.style.display = "block";   // Kod girişi görünür
+    });
+  }
 
   if (btnHomeGroup) {
     btnHomeGroup.addEventListener("click", () => {
@@ -966,7 +975,6 @@ if (btnHomeDuel) {
       showScreen("screen-settings");
     });
   }
-
 
   /* Creator screen back */
   const btnBackCreator = document.getElementById("btn-back-from-creator");
@@ -1010,7 +1018,7 @@ if (btnHomeDuel) {
       if (!code) return;
       navigator.clipboard.writeText(code).then(() => {
         btnCopyRoomCode.textContent = "Kopyalandı ✔";
-        setTimeout(() => btnCopyRoomCode.textContent = "Kodu Kopyala", 1500);
+        setTimeout(() => (btnCopyRoomCode.textContent = "Kodu Kopyala"), 1500);
       });
     });
   }
@@ -1039,9 +1047,7 @@ if (btnHomeDuel) {
   if (btnGroupJoin) {
     btnGroupJoin.addEventListener("click", () => {
       const status = document.getElementById("join-room-status");
-      if (status) {
-        status.textContent = "";
-      }
+      if (status) status.textContent = "";
       showScreen("screen-group-join");
     });
   }
@@ -1060,15 +1066,14 @@ if (btnHomeDuel) {
     });
   }
 
- /* Solo start */
-const soloStartBtn = document.getElementById("solo-start-btn");
-if (soloStartBtn) {
-  soloStartBtn.addEventListener("click", () => {
-
-    startSoloFromCreator();
-  });
-}
-
+  /* Solo start */
+  const soloStartBtn = document.getElementById("solo-start-btn");
+  if (soloStartBtn) {
+    soloStartBtn.addEventListener("click", () => {
+      if (!guardGameActive()) return;
+      startSoloFromCreator();
+    });
+  }
 
   /* Duel link create */
   const createLinkBtn = document.getElementById("create-link-btn");
@@ -1086,17 +1091,17 @@ if (soloStartBtn) {
       linkInput.select();
       document.execCommand("copy");
       copyLinkBtn.textContent = "Kopyalandı ✔";
-      setTimeout(() => copyLinkBtn.textContent = "Kopyala", 1500);
+      setTimeout(() => (copyLinkBtn.textContent = "Kopyala"), 1500);
     });
   }
-      // Düello: oyun kodu ile giriş
+
+  // Düello: oyun kodu ile giriş
   const btnDuelJoinNow = document.getElementById("btn-duel-join-now");
   if (btnDuelJoinNow) {
     btnDuelJoinNow.addEventListener("click", () => {
       joinDuelByCode();
     });
   }
-
 
   /* Game screen back */
   const btnBackGame = document.getElementById("btn-back-from-game");
@@ -1151,6 +1156,7 @@ window.addEventListener("load", async () => {
   setupUIEvents();
   handleDuelloLinkIfAny();
 });
+
 
 
 
