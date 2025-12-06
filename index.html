@@ -490,12 +490,22 @@ body {
       </div>
 
       <div id="generated-link-wrap">
-        <div>Bu linki arkadaşına gönder:</div>
+        <div>Bu oyun kodunu arkadaşına gönder:</div>
         <input id="generated-link" type="text" readonly />
         <button id="copy-link-btn" class="small" style="margin-top:6px;">Kopyala</button>
       </div>
     </div>
   </section>
+        <div id="duel-join-wrap" style="margin-top:16px; display:none;">
+        <div>Elindeki oyun kodu ile düelloya katıl:</div>
+        <input id="duel-join-code" type="text" placeholder="Oyun kodu" />
+        <button id="btn-duel-join-now" class="small" style="margin-top:6px;">
+          Oyun kodu ile giriş
+        </button>
+      </div>
+    </div>
+  </section>
+
 
   <!-- ========== OYUN EKRANI ========== -->
   <section id="screen-game" class="screen-hidden">
@@ -681,6 +691,7 @@ const firebaseConfig = {
   <script src="script.js"></script>
 </body>
 </html>
+
 
 
 
