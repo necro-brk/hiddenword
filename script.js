@@ -693,14 +693,12 @@ function startSoloFromCreator() {
 
 function createDuelLink() {
   const secretInput = document.getElementById("secret-input");
-  const modeSelect  = document.getElementById("mode-select");
   const linkWrap    = document.getElementById("generated-link-wrap");
   const linkInput   = document.getElementById("generated-link");
 
-  if (!secretInput || !modeSelect || !linkWrap || !linkInput) return;
+  if (!secretInput || !linkWrap || !linkInput) return;
 
   let word = (secretInput.value || "").trim();
-  const mode = modeSelect.value || "5";
 
   if (!word) {
     alert("Lütfen bir gizli kelime yaz.");
@@ -710,24 +708,18 @@ function createDuelLink() {
   word = word.replace(/\s+/g, "");
   word = trUpper(word);
 
-  const len = parseInt(mode, 10) || word.length;
-  if (word.length !== len) {
-    if (!confirm(`Seçili mod ${len} harfli, kelimeniz ${word.length} harfli. Yine de devam edilsin mi?`)) {
-      return;
-    }
+  const len = word.length; // 🔹 Modu tamamen kelime uzunluğuna bağlıyoruz
+
+  if (!/^[A-ZÇĞİÖŞÜI]+$/.test(word) || len < 2) {
+    alert("Geçerli bir kelime gir (yalnızca harf, en az 2 harf).");
+    return;
   }
 
-  if (!/^[A-ZÇĞİÖŞÜI]+$/.test(word)) {
-    if (!confirm("Kelimenizde harf dışı karakter var. Yine de kullanmak istiyor musun?")) {
-      return;
-    }
-  }
-
-  const code = encodeSecret(word);
-  const url  = `${window.location.origin}${window.location.pathname}?code=${code}&mode=${len}`;
-  linkInput.value = url;
+  const code = encodeSecret(word);  // 🔹 Artık oyun kodu bu
+  linkInput.value = code;
   linkWrap.style.display = "block";
 }
+
 
 /* ---- DÜELLO MODU (LINK İLE GİRENLER) ---- */
 
@@ -875,6 +867,14 @@ function setupUIEvents() {
     }
     return true;
   }
+  function setupUIEvents() {
+
+  // Creator ekranındaki "Oyun modu" alanı (dropdown'un parent'ı)
+  const modeField = document.querySelector(".creator-field label[for='mode-select']")?.parentElement;
+
+  // Düello için "kod ile giriş" alanı (bunu birazdan HTML'de ekleyeceğiz)
+  const duelJoinWrap = document.getElementById("duel-join-wrap");
+
 
   /* Ana menü */
   const btnHomeSolo     = document.getElementById("btn-home-solo");
@@ -882,38 +882,38 @@ function setupUIEvents() {
   const btnHomeGroup    = document.getElementById("btn-home-group");
   const btnHomeSettings = document.getElementById("btn-home-settings");
 
-  if (btnHomeSolo) {
-    btnHomeSolo.addEventListener("click", () => {
-      if (!guardGameActive()) return;
+if (btnHomeSolo) {
+  btnHomeSolo.addEventListener("click", () => {
+    CURRENT_GAME_TYPE = "solo";
+    showScreen("screen-creator");
+    const title = document.getElementById("creator-title");
+    if (title) title.textContent = "Solo Modu";
 
-      CURRENT_GAME_TYPE = "solo";
-      showScreen("screen-creator");
+    const secretField = document.querySelector(".creator-field input#secret-input")?.parentElement;
+    const linkWrap    = document.getElementById("generated-link-wrap");
+    if (secretField)  secretField.style.display = "none";
+    if (linkWrap)     linkWrap.style.display    = "none";
+    if (modeField)    modeField.style.display   = "block";   // 🔹 SOLO'da dropdown görünsün
+    if (duelJoinWrap) duelJoinWrap.style.display = "none";   // 🔹 Düello kod girişi gizli
+  });
+}
 
-      const title = document.getElementById("creator-title");
-      if (title) title.textContent = "Solo Modu";
 
-      const secretField = document.querySelector(".creator-field input#secret-input")?.parentElement;
-      const linkWrap    = document.getElementById("generated-link-wrap");
-      if (secretField) secretField.style.display = "none";
-      if (linkWrap)    linkWrap.style.display    = "none";
-    });
-  }
+if (btnHomeDuel) {
+  btnHomeDuel.addEventListener("click", () => {
+    CURRENT_GAME_TYPE = "duel-create";
+    showScreen("screen-creator");
+    const title = document.getElementById("creator-title");
+    if (title) title.textContent = "Düello Modu";
 
-  if (btnHomeDuel) {
-    btnHomeDuel.addEventListener("click", () => {
-      if (!guardGameActive()) return;
-
-      CURRENT_GAME_TYPE = "duel-create";
-      showScreen("screen-creator");
-      const title = document.getElementById("creator-title");
-      if (title) title.textContent = "Düello Modu – Link Oluştur";
-
-      const secretField = document.querySelector(".creator-field input#secret-input")?.parentElement;
-      const linkWrap    = document.getElementById("generated-link-wrap");
-      if (secretField) secretField.style.display = "block";
-      if (linkWrap)    linkWrap.style.display    = "none";
-    });
-  }
+    const secretField = document.querySelector(".creator-field input#secret-input")?.parentElement;
+    const linkWrap    = document.getElementById("generated-link-wrap");
+    if (secretField)  secretField.style.display = "block";
+    if (linkWrap)     linkWrap.style.display    = "none";
+    if (modeField)    modeField.style.display   = "none";    // 🔹 DÜELLO'da dropdown KAYBOL
+    if (duelJoinWrap) duelJoinWrap.style.display = "block";  // 🔹 Düello kod girişi GÖRÜNÜR
+  });
+}
 
   if (btnHomeGroup) {
     btnHomeGroup.addEventListener("click", () => {
@@ -1106,6 +1106,7 @@ window.addEventListener("load", async () => {
   setupUIEvents();
   handleDuelloLinkIfAny();
 });
+
 
 
 
