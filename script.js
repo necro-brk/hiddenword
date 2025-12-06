@@ -1027,11 +1027,6 @@ function setupUIEvents() {
 const soloStartBtn = document.getElementById("solo-start-btn");
 if (soloStartBtn) {
   soloStartBtn.addEventListener("click", () => {
-    // Oyun kilitliyse solo mod başlatma
-    if (typeof GAME_ACTIVE !== "undefined" && !GAME_ACTIVE) {
-      alert("Şu an oyun kapalı. Admin açtığında tekrar deneyebilirsin.");
-      return;
-    }
 
     startSoloFromCreator();
   });
@@ -1111,6 +1106,7 @@ window.addEventListener("load", async () => {
   setupUIEvents();
   handleDuelloLinkIfAny();
 });
+
 
 
 
