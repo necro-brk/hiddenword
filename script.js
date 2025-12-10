@@ -413,7 +413,6 @@ function resetGameState(secretWord, contextId) {
   buildKeyboard();
   attachKeydown();
   setStatus("Kelimeyi tahmin etmeye başla!", "#e5e7eb");
-  loadLeaderboard(CURRENT_CONTEXT_ID);
 }
 
 function setStatus(message, color) {
@@ -1174,6 +1173,7 @@ window.addEventListener("load", async () => {
   setupUIEvents();
   handleDuelloLinkIfAny();
 });
+
 
 
 
