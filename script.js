@@ -610,9 +610,9 @@ function submitGuess() {
     setStatus(`Tebrikler, kelimeyi buldun! 🎉 Skorun: ${score}`, "#22c55e");
     finished = true;
     // ✅ Solo modda KAZANINCA popup aç
-if (CURRENT_GAME_TYPE === "solo") {
+if (CURRENT_GAME_TYPE === "solo" || CURRENT_GAME_TYPE === "duel-guess") {
   const titleEl = document.getElementById("endgame-title");
-  if (titleEl) titleEl.textContent = "Tebrikler! 🎉";
+  if (titleEl) titleEl.textContent = (CURRENT_GAME_TYPE === "duel-guess") ? "Düello bitti! 🎉" : "Tebrikler! 🎉";
   openEndgameModal(SECRET_WORD);
 }
     return;
@@ -623,7 +623,7 @@ if (CURRENT_GAME_TYPE === "solo") {
     finished = true;
 
     // ✅ Solo modda kaybedince popup + yeni oyun
-    if (CURRENT_GAME_TYPE === "solo") {
+    if (CURRENT_GAME_TYPE === "solo" || CURRENT_GAME_TYPE === "duel-guess") {
       openEndgameModal(SECRET_WORD);
     }
     return;
@@ -666,20 +666,32 @@ function bindEndgameModalEvents() {
     });
   }
 
-  // ✅ Yeni oyun: menüye dönmeden aynı uzunlukta yeni solo başlat
-  if (btnNew) {
-    btnNew.addEventListener("click", () => {
-      closeEndgameModal();
-      // solo modda aynı uzunluk tekrar başlasın
-      try {
-        startSoloWithCurrentMode();
-      } catch (e) {
-        // fallback: creator'a dön
-        showScreen("screen-creator");
-      }
-    });
-  }
-}
+  // ✅ Yeni oyun / Tekrar oyna davranışı (mode'a göre)
+if (btnNew) {
+  btnNew.addEventListener("click", () => {
+    closeEndgameModal();
+
+    // Solo: aynı uzunlukta yeni kelime
+    if (CURRENT_GAME_TYPE === "solo") {
+      try { startSoloWithCurrentMode(); } catch (e) { showScreen("screen-creator"); }
+      return;
+    }
+
+    // Düello tahmin: aynı düelloyu tekrar oyna (aynı gizli kelime + aynı kod)
+    if (CURRENT_GAME_TYPE === "duel-guess") {
+      const badgeMode = document.getElementById("badge-game-mode");
+      if (badgeMode) badgeMode.textContent = `Düello · ${String(CURRENT_MODE || SECRET_WORD.length)} harfli – Tahmin`;
+      resetGameState(SECRET_WORD, CURRENT_CONTEXT_ID);
+      setLeaderboardVisible(false);
+      showScreen("screen-game");
+      setStatus("Düello devam ediyor. Tahmin et!");
+      return;
+    }
+
+    // Diğer modlar fallback
+    showScreen("screen-creator");
+  });
+}}
 
 function startSoloWithCurrentMode() {
   // CURRENT_MODE: "3".."8" veya mod value
@@ -1337,4 +1349,16 @@ window.addEventListener("load", async () => {
   bindEndgameModalEvents();
   handleDuelloLinkIfAny();
 });
+
+
+
+
+
+
+
+
+
+
+
+
 
