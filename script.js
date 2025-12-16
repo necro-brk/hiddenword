@@ -316,6 +316,8 @@ function getLBKey(contextId) {
 }
 
 function loadLeaderboard(contextId) {
+  // 🔒 Sadece grup modunda leaderboard aktif
+  if (CURRENT_GAME_TYPE !== "group") return;
   const key = getLBKey(contextId);
   let arr = [];
   try {
@@ -376,6 +378,12 @@ function renderLeaderboard(rows) {
     `;
     tbody.appendChild(tr);
   });
+}
+
+function setLeaderboardVisible(isVisible) {
+  const panel = document.getElementById("leaderboard-panel");
+  if (!panel) return;
+  panel.style.display = isVisible ? "block" : "none";
 }
 
 /* ================== OYUN DURUMU & BOARD ================== */
@@ -581,8 +589,8 @@ function submitGuess() {
     );
     const name = getPlayerName();
 
-    // 🔒 Solo modda leaderboard'a yazma
-    if (CURRENT_GAME_TYPE !== "solo") {
+    // ✅ Leaderboard sadece Grup Yarışı modunda
+    if (CURRENT_GAME_TYPE === "group") {
       saveScoreToLeaderboard(
         name,
         score,
@@ -696,6 +704,7 @@ function startSoloFromCreator() {
   }
 
   resetGameState(word, contextId);
+  setLeaderboardVisible(false);
   showScreen("screen-game");
 }
 
@@ -726,7 +735,10 @@ function createDuelLink() {
   }
 
   const code = encodeSecret(word);  // 🔹 Artık oyun kodu bu
-  linkInput.value = code;
+
+  // Arkadaşın direkt linke tıklaması için tam URL üret
+  const joinUrl = `${location.origin}${location.pathname}?code=${encodeURIComponent(code)}`;
+  linkInput.value = joinUrl;
   linkWrap.style.display = "block";
 }
 
@@ -760,6 +772,7 @@ function handleDuelloLinkIfAny() {
   }
 
   resetGameState(secretWord, contextId);
+  setLeaderboardVisible(false);
   showScreen("screen-game");
 }
 
@@ -767,7 +780,18 @@ function joinDuelByCode() {
   const input = document.getElementById("duel-join-code");
   if (!input) return;
 
-  const codeParam = (input.value || "").trim();
+  let codeParam = (input.value || "").trim();
+
+  // Kullanıcı yanlışlıkla tam URL yapıştırdıysa ?code=... kısmını çek
+  if (/^https?:\/\//i.test(codeParam)) {
+    try {
+      const u = new URL(codeParam);
+      const extracted = u.searchParams.get("code");
+      if (extracted) codeParam = extracted.trim();
+    } catch (e) {
+      // URL parse edilemezse olduğu gibi kalır
+    }
+  }
   if (!codeParam) {
     alert("Geçerli bir oyun kodu gir.");
     return;
@@ -796,6 +820,7 @@ function joinDuelByCode() {
   }
 
   resetGameState(secretWord, contextId);
+  setLeaderboardVisible(false);
   showScreen("screen-game");
 }
 
@@ -899,6 +924,8 @@ function startGroupGame() {
   }
 
   resetGameState(SECRET_WORD, contextId);
+  setLeaderboardVisible(true);
+  loadLeaderboard(contextId);
   showScreen("screen-game");
 }
 
@@ -929,6 +956,10 @@ function setupUIEvents() {
   const btnHomeGroup    = document.getElementById("btn-home-group");
   const btnHomeSettings = document.getElementById("btn-home-settings");
 
+  // Creator ekranındaki butonlar
+  const soloStartBtnEl  = document.getElementById("solo-start-btn");
+  const createLinkBtnEl = document.getElementById("create-link-btn");
+
   if (btnHomeSolo) {
     btnHomeSolo.addEventListener("click", () => {
       if (!guardGameActive()) return;
@@ -947,6 +978,9 @@ function setupUIEvents() {
       if (linkWrap)     linkWrap.style.display     = "none";
       if (modeField)    modeField.style.display    = "block";   // Solo'da dropdown açık
       if (duelJoinWrap) duelJoinWrap.style.display = "none";    // Kod girişi gizli
+
+      if (soloStartBtnEl)  soloStartBtnEl.style.display  = "block";
+      if (createLinkBtnEl) createLinkBtnEl.style.display = "none";
     });
   }
 
@@ -968,6 +1002,9 @@ function setupUIEvents() {
       if (linkWrap)     linkWrap.style.display     = "none";
       if (modeField)    modeField.style.display    = "none";    // Düello'da dropdown yok
       if (duelJoinWrap) duelJoinWrap.style.display = "block";   // Kod girişi görünür
+
+      if (soloStartBtnEl)  soloStartBtnEl.style.display  = "none";
+      if (createLinkBtnEl) createLinkBtnEl.style.display = "block";
     });
   }
 
@@ -1126,7 +1163,9 @@ if (btnBackCreator) {
     btnBackGame.addEventListener("click", () => {
       detachKeydown();
       showScreen("screen-home");
-    });
+    
+      setLeaderboardVisible(false);
+});
   }
 
   /* Settings back & actions */
@@ -1173,4 +1212,3 @@ window.addEventListener("load", async () => {
   setupUIEvents();
   handleDuelloLinkIfAny();
 });
-
