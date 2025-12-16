@@ -16,30 +16,6 @@ const DEFAULT_THEME = {
   tileCorrect:   "#16a34a",
   tilePresent:   "#eab308",
   tileAbsent:    "#111827",
-
-// ===== Solo bitiş popup butonları =====
-const endModal = document.getElementById("endgame-modal");
-const btnNewSolo = document.getElementById("endgame-new-solo");
-const btnClose = document.getElementById("endgame-close");
-  const btnClose2 = document.getElementById("endgame-close-2");
-
-if (btnNewSolo) {
-  btnNewSolo.addEventListener("click", () => {
-    restartSoloSameMode();
-  });
-}
-if (btnClose) {
-  btnClose.addEventListener("click", () => {
-    hideEndgameModal();
-  });
-}
-// Overlay dışına tıklayınca kapat
-if (endModal) {
-  endModal.addEventListener("click", (e) => {
-    if (e.target === endModal) hideEndgameModal();
-  });
-}
-
 };
 
 /* ================== GLOBAL STATE ================== */
@@ -70,6 +46,43 @@ let LEADERBOARD_DATA = [];
 
 let playerNameCache = "";
 
+
+/* ================== SOLO BİTİŞ POPUP ================== */
+function showEndgameModal(secretWord) {
+  const modal = document.getElementById("endgame-modal");
+  const wordEl = document.getElementById("endgame-word");
+  if (!modal || !wordEl) return;
+  wordEl.textContent = secretWord || "";
+  modal.classList.add("is-open");
+}
+
+function hideEndgameModal() {
+  const modal = document.getElementById("endgame-modal");
+  if (!modal) return;
+  modal.classList.remove("is-open");
+}
+
+// Solo modda aynı uzunlukta yeni oyun başlat
+function restartSoloSameMode() {
+  hideEndgameModal();
+
+  CURRENT_GAME_TYPE = "solo";
+  CURRENT_CONTEXT_ID = `solo:${CURRENT_MODE}`;
+
+  const modeValue = CURRENT_MODE || "5";
+  const word = pickRandomWord(modeValue);
+  SECRET_WORD = word;
+
+  const badgeMode = document.getElementById("badge-game-mode");
+  const badgeRoom = document.getElementById("badge-room-info");
+  if (badgeMode) badgeMode.textContent = `Solo · ${word.length} harfli`;
+  if (badgeRoom) badgeRoom.textContent = "";
+
+  resetGameState(word, CURRENT_CONTEXT_ID);
+  if (typeof setLeaderboardVisible === "function") setLeaderboardVisible(false);
+  showScreen("screen-game");
+  setStatus("Yeni oyun başladı. Bol şans!");
+}
 /* ================== FIREBASE YARDIMCI FONKSİYONLAR ================== */
 
 function initFirebaseDb() {
@@ -208,7 +221,7 @@ function pickRandomWord(modeValue) {
     }
   }
 
-  dlog("Seçilen mod:", modeValue, "Kelime:", word, "Uzunluk:", word.length);
+  console.log("Seçilen mod:", modeValue, "Kelime:", word, "Uzunluk:", word.length);
   return word;
 }
 
@@ -219,7 +232,23 @@ function getQueryParam(name) {
   return params.get(name);
 }
 
-// (Eski code/encode sistemi kaldırıldı: Düello artık Firebase duels/<KOD> üzerinden çalışıyor.)
+const SECRET_SHIFT = 37;
+
+function encodeSecret(word) {
+  const parts = [];
+  for (let i = 0; i < word.length; i++) {
+    parts.push(word.charCodeAt(i) + SECRET_SHIFT);
+  }
+  return parts.join("x");
+}
+
+function decodeSecret(code) {
+  if (!code) return "";
+  return code
+    .split("x")
+    .map(p => String.fromCharCode(parseInt(p, 10) - SECRET_SHIFT))
+    .join("");
+}
 
 /* ================== EKRAN GEÇİŞLERİ ================== */
 
@@ -389,48 +418,6 @@ function renderLeaderboard(rows) {
     `;
     tbody.appendChild(tr);
   });
-}
-
-/* ================== SOLO BİTİŞ POPUP ================== */
-function showSoloLoseModal(secretWord) {
-  const overlay = document.getElementById("endgame-modal");
-  const wordEl  = document.getElementById("endgame-word");
-  if (!overlay || !wordEl) return;
-
-  wordEl.textContent = secretWord || "";
-  overlay.classList.add("is-open");
-}
-
-function hideEndgameModal() {
-  const overlay = document.getElementById("endgame-modal");
-  if (!overlay) return;
-  overlay.classList.remove("is-open");
-}
-
-function restartSoloSameMode() {
-  const targetLen = parseInt(CURRENT_MODE, 10) || 5;
-  const modeStr   = String(targetLen);
-
-  let word = pickRandomWord(modeStr);
-  word = trUpper(word).replace(/[^A-ZÇĞİÖŞÜI]/g, "");
-
-  if (word.length > targetLen) {
-    word = word.slice(0, targetLen);
-  } else {
-    while (word.length < targetLen) word += "A";
-  }
-
-  const contextId = `solo:${modeStr}`;
-
-  const badgeMode = document.getElementById("badge-game-mode");
-  const badgeRoom = document.getElementById("badge-room-info");
-  if (badgeMode) badgeMode.textContent = `Solo · ${targetLen} harfli`;
-  if (badgeRoom) badgeRoom.textContent = "";
-
-  hideEndgameModal();
-  resetGameState(word, contextId);
-  setLeaderboardVisible(false);
-  showScreen("screen-game");
 }
 
 function setLeaderboardVisible(isVisible) {
@@ -660,9 +647,11 @@ function submitGuess() {
 
   if (currentRow === ROWS - 1) {
     if (CURRENT_GAME_TYPE === "solo") {
-      showSoloLoseModal(SECRET_WORD);
+      setStatus("Bitti! Doğru kelimeyi popup'ta görebilirsin.", "#f97316");
+      showEndgameModal(SECRET_WORD);
+    } else {
+      setStatus(`Bitti! Gizli kelime: ${SECRET_WORD}`, "#f97316");
     }
-    setStatus(`Bitti! Gizli kelime: ${SECRET_WORD}`, "#f97316");
     finished = true;
     return;
   }
@@ -774,169 +763,110 @@ function createDuelLink() {
   if (!secretInput || !linkWrap || !linkInput) return;
 
   let word = (secretInput.value || "").trim();
+
   if (!word) {
     alert("Lütfen bir gizli kelime yaz.");
     return;
   }
 
-  word = trUpper(word.replace(/\s+/g, ""));
-  if (!/^[A-ZÇĞİÖŞÜI]+$/.test(word) || word.length < 2) {
+  word = word.replace(/\s+/g, "");
+  word = trUpper(word);
+
+  const len = word.length; // 🔹 Modu tamamen kelime uzunluğuna bağlıyoruz
+
+  if (!/^[A-ZÇĞİÖŞÜI]+$/.test(word) || len < 2) {
     alert("Geçerli bir kelime gir (yalnızca harf, en az 2 harf).");
     return;
   }
 
-  if (!FIREBASE_DB) {
-    alert("Sunucu bağlantısı yok (Firebase yok).");
-    return;
-  }
+  const code = encodeSecret(word);  // 🔹 Artık oyun kodu bu
 
-  // 🔥 Kısa düello kodu üret: duels/<KOD> altına yazacağız
-  const makeCode = () => generateRoomCode(); // 5 karakter
-
-  const tryCreate = async (attempt = 0) => {
-    if (attempt >= 6) throw new Error("Düello kodu üretilemedi (çok fazla çakışma).");
-
-    const duelCode = makeCode();
-    const path = "duels/" + duelCode;
-
-    // Çakışma kontrolü
-    const snap = await FIREBASE_DB.ref(path).once("value");
-    if (snap.exists()) return tryCreate(attempt + 1);
-
-    await FIREBASE_DB.ref(path).set({
-      secretWord: word,
-      createdAt: Date.now()
-    });
-
-    const url = `${location.origin}${location.pathname}?duel=${encodeURIComponent(duelCode)}`;
-    // ✅ Kullanıcıya sadece 5 haneli KOD göster (Grup modu gibi)
-    linkInput.value = duelCode;
-    // (İsteğe bağlı) Linki gizli olarak dataset'te tut
-    linkInput.dataset.duelUrl = url;
-    linkWrap.style.display = "block";
-  };
-
-  tryCreate().catch(err => {
-    console.warn("Düello odası oluşturulamadı:", err);
-    alert("Düello oluşturulurken hata oluştu.");
-  });
+  // Arkadaşın direkt linke tıklaması için tam URL üret
+  const joinUrl = `${location.origin}${location.pathname}?code=${encodeURIComponent(code)}`;
+  linkInput.value = joinUrl;
+  linkWrap.style.display = "block";
 }
 
 
 /* ---- DÜELLO MODU (LINK İLE GİRENLER) ---- */
 
 function handleDuelloLinkIfAny() {
-  const duelCode = getQueryParam("duel");
-  if (!duelCode) return;
+  const codeParam = getQueryParam("code");
+  if (!codeParam) return;
 
-  if (!FIREBASE_DB) {
-    alert("Sunucu bağlantısı yok (Firebase yok).");
-    return;
+  const modeParam = getQueryParam("mode"); // "3".."8" olabilir
+  let secretWord  = decodeSecret(codeParam);
+  secretWord      = trUpper(secretWord).replace(/\s+/g, "");
+
+  if (!/^[A-ZÇĞİÖŞÜI]+$/.test(secretWord) || secretWord.length < 2) {
+    secretWord = "HATA";
   }
 
-  const code = String(duelCode).trim().toUpperCase();
-  const path = "duels/" + code;
+  CURRENT_MODE      = modeParam || String(secretWord.length);
+  CURRENT_GAME_TYPE = "duel-guess";
 
-  FIREBASE_DB.ref(path).once("value").then(snapshot => {
-    const data = snapshot.val();
-    if (!data || !data.secretWord) {
-      alert("Geçersiz veya süresi dolmuş düello kodu.");
-      return;
-    }
+  const contextId = `duel-link:${CURRENT_MODE}:${codeParam}`;
 
-    const secretWord = trUpper(String(data.secretWord)).replace(/\s+/g, "");
-    if (!/^[A-ZÇĞİÖŞÜI]+$/.test(secretWord) || secretWord.length < 2) {
-      alert("Düello verisi bozuk (geçersiz kelime).");
-      return;
-    }
+  const badgeMode = document.getElementById("badge-game-mode");
+  const badgeRoom = document.getElementById("badge-room-info");
+  if (badgeMode) {
+    badgeMode.textContent = `Düello · ${secretWord.length} harfli – Tahmin`;
+  }
+  if (badgeRoom) {
+    badgeRoom.textContent = "Bu linke özel oyun";
+  }
 
-    CURRENT_MODE      = String(secretWord.length);
-    CURRENT_GAME_TYPE = "duel-guess";
-
-    const contextId = `duel:${code}`;
-
-    const badgeMode = document.getElementById("badge-game-mode");
-    const badgeRoom = document.getElementById("badge-room-info");
-    if (badgeMode) {
-      badgeMode.textContent = `Düello · ${secretWord.length} harfli`;
-    }
-    if (badgeRoom) {
-      badgeRoom.textContent = `Düello kodu: ${code}`;
-    }
-
-    resetGameState(secretWord, contextId);
-    setLeaderboardVisible(false);
-    showScreen("screen-game");
-  }).catch(err => {
-    console.warn("Düello verisi okunamadı:", err);
-    alert("Düello açılırken hata oluştu.");
-  });
+  resetGameState(secretWord, contextId);
+  setLeaderboardVisible(false);
+  showScreen("screen-game");
 }
 
 function joinDuelByCode() {
   const input = document.getElementById("duel-join-code");
   if (!input) return;
 
-  let duelCode = (input.value || "").trim();
+  let codeParam = (input.value || "").trim();
 
-  // Kullanıcı yanlışlıkla tam URL yapıştırdıysa ?duel=... kısmını çek
-  if (/^https?:\/\//i.test(duelCode)) {
+  // Kullanıcı yanlışlıkla tam URL yapıştırdıysa ?code=... kısmını çek
+  if (/^https?:\/\//i.test(codeParam)) {
     try {
-      const u = new URL(duelCode);
-      const extracted = u.searchParams.get("duel");
-      if (extracted) duelCode = extracted.trim();
+      const u = new URL(codeParam);
+      const extracted = u.searchParams.get("code");
+      if (extracted) codeParam = extracted.trim();
     } catch (e) {
       // URL parse edilemezse olduğu gibi kalır
     }
   }
-
-  duelCode = duelCode.toUpperCase();
-  if (!duelCode) {
-    alert("Geçerli bir düello kodu gir.");
+  if (!codeParam) {
+    alert("Geçerli bir oyun kodu gir.");
     return;
   }
 
-  if (!FIREBASE_DB) {
-    alert("Sunucu bağlantısı yok (Firebase yok).");
+  let secretWord = decodeSecret(codeParam);
+  secretWord     = trUpper(secretWord).replace(/\s+/g, "");
+
+  if (!/^[A-ZÇĞİÖŞÜI]+$/.test(secretWord) || secretWord.length < 2) {
+    alert("Bu koddan geçerli bir kelime çözülemedi.");
     return;
   }
 
-  const path = "duels/" + duelCode;
+  CURRENT_MODE      = String(secretWord.length);
+  CURRENT_GAME_TYPE = "duel-guess";
 
-  FIREBASE_DB.ref(path).once("value").then(snapshot => {
-    const data = snapshot.val();
-    if (!data || !data.secretWord) {
-      alert("Bu kodla eşleşen bir düello bulunamadı.");
-      return;
-    }
+  const contextId = `duel-code:${CURRENT_MODE}:${codeParam}`;
 
-    const secretWord = trUpper(String(data.secretWord)).replace(/\s+/g, "");
-    if (!/^[A-ZÇĞİÖŞÜI]+$/.test(secretWord) || secretWord.length < 2) {
-      alert("Düello verisi bozuk (geçersiz kelime).");
-      return;
-    }
+  const badgeMode = document.getElementById("badge-game-mode");
+  const badgeRoom = document.getElementById("badge-room-info");
+  if (badgeMode) {
+    badgeMode.textContent = `Düello · ${secretWord.length} harfli – Tahmin`;
+  }
+  if (badgeRoom) {
+    badgeRoom.textContent = "Arkadaşının gönderdiği oyun kodu";
+  }
 
-    CURRENT_MODE      = String(secretWord.length);
-    CURRENT_GAME_TYPE = "duel-guess";
-
-    const contextId = `duel:${duelCode}`;
-
-    const badgeMode = document.getElementById("badge-game-mode");
-    const badgeRoom = document.getElementById("badge-room-info");
-    if (badgeMode) {
-      badgeMode.textContent = `Düello · ${secretWord.length} harfli`;
-    }
-    if (badgeRoom) {
-      badgeRoom.textContent = `Düello kodu: ${duelCode}`;
-    }
-
-    resetGameState(secretWord, contextId);
-    setLeaderboardVisible(false);
-    showScreen("screen-game");
-  }).catch(err => {
-    console.warn("Düello verisi okunamadı:", err);
-    alert("Düelloya katılırken hata oluştu.");
-  });
+  resetGameState(secretWord, contextId);
+  setLeaderboardVisible(false);
+  showScreen("screen-game");
 }
 
 
@@ -1254,22 +1184,11 @@ if (btnBackCreator) {
 
   const copyLinkBtn = document.getElementById("copy-link-btn");
   if (copyLinkBtn) {
-    copyLinkBtn.addEventListener("click", async () => {
+    copyLinkBtn.addEventListener("click", () => {
       const linkInput = document.getElementById("generated-link");
       if (!linkInput) return;
-
-      // ✅ Grup modu gibi: sadece KOD kopyala
-      const code = (linkInput.value || "").trim();
-      if (!code) return;
-
-      try {
-        await navigator.clipboard.writeText(code);
-      } catch (e) {
-        // Fallback
-        linkInput.select();
-        document.execCommand("copy");
-      }
-
+      linkInput.select();
+      document.execCommand("copy");
       copyLinkBtn.textContent = "Kopyalandı ✔";
       setTimeout(() => (copyLinkBtn.textContent = "Kopyala"), 1500);
     });
@@ -1324,6 +1243,23 @@ if (btnBackCreator) {
       changePlayerName();
     });
   }
+
+
+/* Solo bitiş popup butonları */
+const endModal = document.getElementById("endgame-modal");
+const btnNewSolo = document.getElementById("endgame-new-solo");
+const btnClose1 = document.getElementById("endgame-close");
+const btnClose2 = document.getElementById("endgame-close-2");
+
+if (btnNewSolo) btnNewSolo.addEventListener("click", restartSoloSameMode);
+if (btnClose1) btnClose1.addEventListener("click", hideEndgameModal);
+if (btnClose2) btnClose2.addEventListener("click", hideEndgameModal);
+
+if (endModal) {
+  endModal.addEventListener("click", (e) => {
+    if (e.target === endModal) hideEndgameModal();
+  });
+}
 }
 
 /* ================== WINDOW LOAD ================== */
