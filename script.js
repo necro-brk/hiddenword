@@ -738,9 +738,12 @@ function createDuelLink() {
       secretWord: word,
       createdAt: Date.now()
     });
+// Kullanıcıya sadece KOD göster (Grup modu gibi)
+linkInput.value = duelCode;
 
-    const url = `${location.origin}${location.pathname}?duel=${encodeURIComponent(duelCode)}`;
-    linkInput.value = url;
+// İstersen linki gizli olarak sakla (kopyalama butonunda kullanacağız)
+linkInput.dataset.duelUrl = `${location.origin}${location.pathname}?duel=${encodeURIComponent(duelCode)}`;
+
     linkWrap.style.display = "block";
   };
 
@@ -1180,17 +1183,30 @@ if (btnBackCreator) {
     });
   }
 
-  const copyLinkBtn = document.getElementById("copy-link-btn");
-  if (copyLinkBtn) {
-    copyLinkBtn.addEventListener("click", () => {
-      const linkInput = document.getElementById("generated-link");
-      if (!linkInput) return;
+const copyLinkBtn = document.getElementById("copy-link-btn");
+if (copyLinkBtn) {
+  copyLinkBtn.addEventListener("click", async () => {
+    const linkInput = document.getElementById("generated-link");
+    if (!linkInput) return;
+
+    // KOD kopyala (grup modu gibi)
+    const code = (linkInput.value || "").trim();
+    if (!code) return;
+
+    try {
+      await navigator.clipboard.writeText(code);
+      copyLinkBtn.textContent = "Kopyalandı ✔";
+      setTimeout(() => (copyLinkBtn.textContent = "Kopyala"), 1500);
+    } catch (e) {
+      // fallback
       linkInput.select();
       document.execCommand("copy");
       copyLinkBtn.textContent = "Kopyalandı ✔";
       setTimeout(() => (copyLinkBtn.textContent = "Kopyala"), 1500);
-    });
-  }
+    }
+  });
+}
+
 
   // Düello: oyun kodu ile giriş
   const btnDuelJoinNow = document.getElementById("btn-duel-join-now");
@@ -1255,3 +1271,4 @@ window.addEventListener("load", async () => {
   setupUIEvents();
   handleDuelloLinkIfAny();
 });
+
