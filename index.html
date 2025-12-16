@@ -682,26 +682,21 @@ const firebaseConfig = {
 </script>
 
 
-  <!-- Sözlük ve oyun scriptleri -->
-  <script src="words_tr.js"></script>
-  <!-- SOLO BİTİŞ POPUP -->
-<div id="endgame-modal" class="modal-overlay" aria-hidden="true">
-  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="endgame-title">
-    <div class="modal-head">
-      <div id="endgame-title" class="modal-title">Oyun bitti</div>
-      <button id="endgame-close" class="modal-x" type="button" aria-label="Kapat">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="modal-text">Doğru kelime:</div>
-      <div id="endgame-word" class="modal-word">—</div>
-    </div>
-    <div class="modal-actions">
-      <button id="endgame-new-solo" class="btn primary" type="button">Yeni oyun</button>
-      <button id="endgame-close-2" class="btn" type="button">Kapat</button>
+
+<!-- Solo kaybedince popup -->
+<div id="endgame-modal" class="endgame-modal" aria-hidden="true">
+  <div class="endgame-card" role="dialog" aria-modal="true" aria-labelledby="endgame-title">
+    <h3 id="endgame-title">Oyun bitti</h3>
+    <p>Doğru kelime: <b id="endgame-word"></b></p>
+    <div class="endgame-actions">
+      <button id="endgame-new-solo" class="btn primary">Yeni oyun</button>
+      <button id="endgame-close" class="btn">Kapat</button>
     </div>
   </div>
 </div>
 
+  <!-- Sözlük ve oyun scriptleri -->
+  <script src="words_tr.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
