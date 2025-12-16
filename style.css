@@ -601,3 +601,83 @@ select {
 }
 
 
+
+
+/* ================== SOLO BİTİŞ POPUP ================== */
+.modal-overlay{
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0,0,0,0.55);
+  z-index: 9999;
+}
+.modal-overlay.is-open{
+  display: flex;
+}
+.modal-card{
+  width: min(520px, 92vw);
+  background: rgba(8, 13, 30, 0.92);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.45);
+  backdrop-filter: blur(10px);
+  padding: 16px 16px 14px;
+}
+.modal-head{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.modal-title{
+  font-weight: 800;
+  font-size: 18px;
+}
+.modal-x{
+  appearance: none;
+  border: 0;
+  background: rgba(255,255,255,0.08);
+  color: #e5e7eb;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.modal-body{
+  padding: 8px 2px 14px;
+}
+.modal-text{
+  opacity: 0.9;
+  margin-bottom: 6px;
+}
+.modal-word{
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  text-align: center;
+}
+.modal-actions{
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+.btn{
+  border: 0;
+  border-radius: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+.btn.primary{
+  background: #16a34a;
+  color: #ffffff;
+  font-weight: 700;
+}
