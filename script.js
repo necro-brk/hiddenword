@@ -1174,13 +1174,3 @@ window.addEventListener("load", async () => {
   handleDuelloLinkIfAny();
 });
 
-
-
-
-
-
-
-
-
-
-
