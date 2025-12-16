@@ -605,6 +605,12 @@ function submitGuess() {
 
     setStatus(`Tebrikler, kelimeyi buldun! 🎉 Skorun: ${score}`, "#22c55e");
     finished = true;
+    // ✅ Solo modda KAZANINCA popup aç
+if (CURRENT_GAME_TYPE === "solo") {
+  const titleEl = document.getElementById("endgame-title");
+  if (titleEl) titleEl.textContent = "Tebrikler! 🎉";
+  openEndgameModal(SECRET_WORD);
+}
     return;
   }
 
@@ -1282,6 +1288,7 @@ window.addEventListener("load", async () => {
   bindEndgameModalEvents();
   handleDuelloLinkIfAny();
 });
+
 
 
 
