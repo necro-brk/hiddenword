@@ -4,9 +4,6 @@
  **************************************************/
 
 /* ================== GLOBAL KONSTANTLAR ================== */
-const DEBUG = false;
-const dlog = (...args) => { if (DEBUG) console.log(...args); };
-
 const NAME_KEY  = "hiddenWordPlayerName_v2";
 const THEME_KEY = "hiddenWordTheme_v1";
 const LB_PREFIX = "hiddenWordLB_";
@@ -46,50 +43,13 @@ let LEADERBOARD_DATA = [];
 
 let playerNameCache = "";
 
-
-/* ================== SOLO BİTİŞ POPUP ================== */
-function showEndgameModal(secretWord) {
-  const modal = document.getElementById("endgame-modal");
-  const wordEl = document.getElementById("endgame-word");
-  if (!modal || !wordEl) return;
-  wordEl.textContent = secretWord || "";
-  modal.classList.add("is-open");
-}
-
-function hideEndgameModal() {
-  const modal = document.getElementById("endgame-modal");
-  if (!modal) return;
-  modal.classList.remove("is-open");
-}
-
-// Solo modda aynı uzunlukta yeni oyun başlat
-function restartSoloSameMode() {
-  hideEndgameModal();
-
-  CURRENT_GAME_TYPE = "solo";
-  CURRENT_CONTEXT_ID = `solo:${CURRENT_MODE}`;
-
-  const modeValue = CURRENT_MODE || "5";
-  const word = pickRandomWord(modeValue);
-  SECRET_WORD = word;
-
-  const badgeMode = document.getElementById("badge-game-mode");
-  const badgeRoom = document.getElementById("badge-room-info");
-  if (badgeMode) badgeMode.textContent = `Solo · ${word.length} harfli`;
-  if (badgeRoom) badgeRoom.textContent = "";
-
-  resetGameState(word, CURRENT_CONTEXT_ID);
-  if (typeof setLeaderboardVisible === "function") setLeaderboardVisible(false);
-  showScreen("screen-game");
-  setStatus("Yeni oyun başladı. Bol şans!");
-}
 /* ================== FIREBASE YARDIMCI FONKSİYONLAR ================== */
 
 function initFirebaseDb() {
   try {
     if (typeof firebase !== "undefined") {
       FIREBASE_DB = firebase.database();
-      dlog("Firebase DB hazır");
+      console.log("Firebase DB hazır");
     } else {
       console.warn("firebase globali yok (index.html'deki script sırasını kontrol et)");
     }
@@ -470,6 +430,38 @@ function setStatus(message, color) {
   statusElem.style.color = color || "#e5e7eb";
 }
 
+
+/* ================== ENDGAME MODAL (SOLO) ================== */
+function openEndgameModal(word) {
+  const modal = document.getElementById("endgame-modal");
+  const wordEl = document.getElementById("endgame-word");
+  if (!modal || !wordEl) return;
+  wordEl.textContent = word;
+  modal.classList.add("is-open");
+}
+
+function closeEndgameModal() {
+  const modal = document.getElementById("endgame-modal");
+  if (!modal) return;
+  modal.classList.remove("is-open");
+}
+
+function startNewSoloSameMode() {
+  // Aynı kelime uzunluğunda yeni solo başlat
+  const mode = CURRENT_MODE || "5";
+  const word = pickRandomWord(mode);
+
+  CURRENT_GAME_TYPE  = "solo";
+  CURRENT_CONTEXT_ID = `solo:${mode}`;
+  CURRENT_ROOM       = null;
+
+  setLeaderboardVisible(false);
+  resetGameState(word, CURRENT_CONTEXT_ID);
+  showScreen("screen-game");
+  closeEndgameModal();
+}
+
+
 /* ================== KLAVYE ================== */
 
 function buildKeyboard() {
@@ -646,9 +638,10 @@ function submitGuess() {
   }
 
   if (currentRow === ROWS - 1) {
+    // Solo modda: popup göster + hızlıca yeni oyun başlat
     if (CURRENT_GAME_TYPE === "solo") {
-      setStatus("Bitti! Doğru kelimeyi popup'ta görebilirsin.", "#f97316");
-      showEndgameModal(SECRET_WORD);
+      openEndgameModal(SECRET_WORD);
+      setStatus("Oyun bitti! Yeni oyun başlatabilirsin.", "#f97316");
     } else {
       setStatus(`Bitti! Gizli kelime: ${SECRET_WORD}`, "#f97316");
     }
@@ -988,6 +981,18 @@ function setupUIEvents() {
     return true;
   }
 
+
+// Endgame modal butonları (Solo)
+const endCloseBtn = document.getElementById("endgame-close");
+const endNewSoloBtn = document.getElementById("endgame-new-solo");
+const endModal = document.getElementById("endgame-modal");
+
+if (endCloseBtn) endCloseBtn.addEventListener("click", closeEndgameModal);
+if (endModal) endModal.addEventListener("click", (e) => {
+  if (e.target === endModal) closeEndgameModal();
+});
+if (endNewSoloBtn) endNewSoloBtn.addEventListener("click", startNewSoloSameMode);
+
   // Creator ekranındaki "Oyun modu" alanı (dropdown'un parent'ı)
   const modeField    =
     document.querySelector(".creator-field label[for='mode-select']")?.parentElement;
@@ -1243,23 +1248,6 @@ if (btnBackCreator) {
       changePlayerName();
     });
   }
-
-
-/* Solo bitiş popup butonları */
-const endModal = document.getElementById("endgame-modal");
-const btnNewSolo = document.getElementById("endgame-new-solo");
-const btnClose1 = document.getElementById("endgame-close");
-const btnClose2 = document.getElementById("endgame-close-2");
-
-if (btnNewSolo) btnNewSolo.addEventListener("click", restartSoloSameMode);
-if (btnClose1) btnClose1.addEventListener("click", hideEndgameModal);
-if (btnClose2) btnClose2.addEventListener("click", hideEndgameModal);
-
-if (endModal) {
-  endModal.addEventListener("click", (e) => {
-    if (e.target === endModal) hideEndgameModal();
-  });
-}
 }
 
 /* ================== WINDOW LOAD ================== */
@@ -1274,3 +1262,14 @@ window.addEventListener("load", async () => {
   setupUIEvents();
   handleDuelloLinkIfAny();
 });
+
+
+
+
+
+
+
+
+
+
+
