@@ -7,6 +7,8 @@
 const NAME_KEY  = "hiddenWordPlayerName_v2";
 const THEME_KEY = "hiddenWordTheme_v1";
 const LB_PREFIX = "hiddenWordLB_";
+const DEBUG = false;
+const dlog = (...args) => { if (DEBUG) console.log(...args); };
 
 const DEFAULT_THEME = {
   keyboardColor: "#111827",
@@ -181,7 +183,7 @@ function pickRandomWord(modeValue) {
     }
   }
 
-  console.log("Seçilen mod:", modeValue, "Kelime:", word, "Uzunluk:", word.length);
+ dlog("Seçilen mod:", modeValue, "Kelime:", word, "Uzunluk:", word.length);
   return word;
 }
 
@@ -1262,6 +1264,7 @@ window.addEventListener("load", async () => {
   setupUIEvents();
   handleDuelloLinkIfAny();
 });
+
 
 
 
