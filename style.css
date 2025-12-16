@@ -603,8 +603,9 @@ select {
 
 
 
-/* ===== Solo Endgame Modal ===== */
-.endgame-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);z-index:9999}
+/* SOLO endgame modal */
+.endgame-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);z-index:9999;padding:20px}
 .endgame-modal.is-open{display:flex}
 .endgame-card{width:min(420px,92vw);background:#0b1220;border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+.endgame-card h3{margin:0 0 10px 0}
 .endgame-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:14px}
