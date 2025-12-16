@@ -1279,8 +1279,10 @@ window.addEventListener("load", async () => {
   initFirebaseDb();          // 🔥 Firebase Realtime DB'yi başlat
   loadThemeFromStorage();
   setupUIEvents();
+  bindEndgameModalEvents();
   handleDuelloLinkIfAny();
 });
+
 
 
 
