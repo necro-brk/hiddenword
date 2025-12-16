@@ -103,6 +103,10 @@ function getRoomPath(code) {
   return "rooms/" + code;
 }
 
+function getDuelPath(code) {
+  return "duels/" + code;
+}
+
 /* ================== TÜRKÇE BÜYÜK HARF DÖNÜŞTÜRME ================== */
 
 function trUpper(str) {
@@ -802,113 +806,158 @@ function createDuelLink() {
   word = word.replace(/\s+/g, "");
   word = trUpper(word);
 
-  const len = word.length; // 🔹 Modu tamamen kelime uzunluğuna bağlıyoruz
+  const len = word.length;
 
   if (!/^[A-ZÇĞİÖŞÜI]+$/.test(word) || len < 2) {
     alert("Geçerli bir kelime gir (yalnızca harf, en az 2 harf).");
     return;
   }
 
-  const code = encodeSecret(word);  // 🔹 Artık oyun kodu bu
+  // ✅ Yeni sistem: Grup modu gibi 5 haneli kısa kod
+  const duelCode = generateShortCode(5);
 
-  // Arkadaşın direkt linke tıklaması için tam URL üret
-  const joinUrl = `${location.origin}${location.pathname}?code=${encodeURIComponent(code)}`;
-  linkInput.value = joinUrl;
-  linkWrap.style.display = "block";
+  // Firebase'e kaydet (arkadaş kodla girsin diye)
+  if (!FIREBASE_DB) {
+    alert("Firebase bağlantısı yok. Sayfayı yenileyip tekrar dene.");
+    return;
+  }
+
+  const path = getDuelPath(duelCode);
+  FIREBASE_DB.ref(path).set({
+    secretWord: word,
+    mode: len,
+    createdAt: Date.now()
+  }).then(() => {
+    // Ekranda sadece 5 haneli kod görünsün
+    linkInput.value = duelCode;
+    // Link olarak da paylaşılabilsin (UI'da göstermiyoruz)
+    linkInput.dataset.duelUrl = `${location.origin}${location.pathname}?duel=${encodeURIComponent(duelCode)}`;
+    linkWrap.style.display = "block";
+  }).catch(err => {
+    console.warn("Düello odası oluşturulamadı:", err);
+    alert("Düello kodu oluşturulamadı. (permission_denied olabilir: Firebase rules kontrol)");
+  });
 }
 
 
 /* ---- DÜELLO MODU (LINK İLE GİRENLER) ---- */
 
 function handleDuelloLinkIfAny() {
-  const codeParam = getQueryParam("code");
-  if (!codeParam) return;
+  const duelCode = (getQueryParam("duel") || "").trim().toUpperCase();
+  if (!duelCode) return;
 
-  const modeParam = getQueryParam("mode"); // "3".."8" olabilir
-  let secretWord  = decodeSecret(codeParam);
-  secretWord      = trUpper(secretWord).replace(/\s+/g, "");
-
-  if (!/^[A-ZÇĞİÖŞÜI]+$/.test(secretWord) || secretWord.length < 2) {
-    secretWord = "HATA";
+  if (!FIREBASE_DB) {
+    console.warn("Firebase yok, düello kodu çözümlenemedi.");
+    return;
   }
 
-  CURRENT_MODE      = modeParam || String(secretWord.length);
-  CURRENT_GAME_TYPE = "duel-guess";
+  const path = getDuelPath(duelCode);
+  FIREBASE_DB.ref(path).once("value").then(snapshot => {
+    const data = snapshot.val();
+    if (!data || !data.secretWord) {
+      alert("Bu düello kodu geçersiz ya da süresi dolmuş olabilir.");
+      return;
+    }
 
-  const contextId = `duel-link:${CURRENT_MODE}:${codeParam}`;
+    let secretWord = trUpper(String(data.secretWord || "")).replace(/\s+/g, "");
+    if (!/^[A-ZÇĞİÖŞÜI]+$/.test(secretWord) || secretWord.length < 2) {
+      alert("Bu düello kodundan geçerli bir kelime okunamadı.");
+      return;
+    }
 
-  const badgeMode = document.getElementById("badge-game-mode");
-  const badgeRoom = document.getElementById("badge-room-info");
-  if (badgeMode) {
-    badgeMode.textContent = `Düello · ${secretWord.length} harfli – Tahmin`;
-  }
-  if (badgeRoom) {
-    badgeRoom.textContent = "Bu linke özel oyun";
-  }
+    CURRENT_MODE      = String(data.mode || secretWord.length);
+    CURRENT_GAME_TYPE = "duel-guess";
 
-  resetGameState(secretWord, contextId);
-  setLeaderboardVisible(false);
-  showScreen("screen-game");
+    const contextId = `duel:${duelCode}`;
+
+    const badgeMode = document.getElementById("badge-game-mode");
+    const badgeRoom = document.getElementById("badge-room-info");
+    if (badgeMode) badgeMode.textContent = `Düello · ${secretWord.length} harfli – Tahmin`;
+    if (badgeRoom) badgeRoom.textContent = `Düello kodu: ${duelCode}`;
+
+    resetGameState(secretWord, contextId);
+    setLeaderboardVisible(false);
+    showScreen("screen-game");
+  }).catch(err => {
+    console.warn("Düello verisi okunamadı:", err);
+    alert("Düello kodu okunamadı. Firebase bağlantını kontrol et.");
+  });
 }
 
 function joinDuelByCode() {
   const input = document.getElementById("duel-join-code");
   if (!input) return;
 
-  let codeParam = (input.value || "").trim();
+  let code = (input.value || "").trim();
 
-  // Kullanıcı yanlışlıkla tam URL yapıştırdıysa ?code=... kısmını çek
-  if (/^https?:\/\//i.test(codeParam)) {
+  // Kullanıcı yanlışlıkla tam URL yapıştırdıysa ?duel=... kısmını çek
+  if (/^https?:\/\//i.test(code)) {
     try {
-      const u = new URL(codeParam);
-      const extracted = u.searchParams.get("code");
-      if (extracted) codeParam = extracted.trim();
-    } catch (e) {
-      // URL parse edilemezse olduğu gibi kalır
+      const u = new URL(code);
+      const extracted = u.searchParams.get("duel");
+      if (extracted) code = extracted.trim();
+    } catch (e) {}
+  }
+
+  code = code.toUpperCase();
+
+  if (!code || code.length < 4) {
+    alert("Geçerli bir düello kodu gir.");
+    return;
+  }
+
+  if (!FIREBASE_DB) {
+    alert("Firebase bağlantısı yok. Sayfayı yenileyip tekrar dene.");
+    return;
+  }
+
+  const path = getDuelPath(code);
+  FIREBASE_DB.ref(path).once("value").then(snapshot => {
+    const data = snapshot.val();
+    if (!data || !data.secretWord) {
+      alert("Bu düello kodu bulunamadı.");
+      return;
     }
-  }
-  if (!codeParam) {
-    alert("Geçerli bir oyun kodu gir.");
-    return;
-  }
 
-  let secretWord = decodeSecret(codeParam);
-  secretWord     = trUpper(secretWord).replace(/\s+/g, "");
+    let secretWord = trUpper(String(data.secretWord || "")).replace(/\s+/g, "");
+    if (!/^[A-ZÇĞİÖŞÜI]+$/.test(secretWord) || secretWord.length < 2) {
+      alert("Bu düello kodundan geçerli bir kelime okunamadı.");
+      return;
+    }
 
-  if (!/^[A-ZÇĞİÖŞÜI]+$/.test(secretWord) || secretWord.length < 2) {
-    alert("Bu koddan geçerli bir kelime çözülemedi.");
-    return;
-  }
+    CURRENT_MODE      = String(data.mode || secretWord.length);
+    CURRENT_GAME_TYPE = "duel-guess";
 
-  CURRENT_MODE      = String(secretWord.length);
-  CURRENT_GAME_TYPE = "duel-guess";
+    const contextId = `duel:${code}`;
 
-  const contextId = `duel-code:${CURRENT_MODE}:${codeParam}`;
+    const badgeMode = document.getElementById("badge-game-mode");
+    const badgeRoom = document.getElementById("badge-room-info");
+    if (badgeMode) badgeMode.textContent = `Düello · ${secretWord.length} harfli – Tahmin`;
+    if (badgeRoom) badgeRoom.textContent = `Düello kodu: ${code}`;
 
-  const badgeMode = document.getElementById("badge-game-mode");
-  const badgeRoom = document.getElementById("badge-room-info");
-  if (badgeMode) {
-    badgeMode.textContent = `Düello · ${secretWord.length} harfli – Tahmin`;
-  }
-  if (badgeRoom) {
-    badgeRoom.textContent = "Arkadaşının gönderdiği oyun kodu";
-  }
-
-  resetGameState(secretWord, contextId);
-  setLeaderboardVisible(false);
-  showScreen("screen-game");
+    resetGameState(secretWord, contextId);
+    setLeaderboardVisible(false);
+    showScreen("screen-game");
+  }).catch(err => {
+    console.warn("Düello verisi okunamadı:", err);
+    alert("Düello kodu okunamadı. Firebase rules/bağlantı kontrol et.");
+  });
 }
 
 
 /* ---- GRUP MODU – ODA KODU ---- */
 
-function generateRoomCode() {
+function generateShortCode(length = 5) {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let code = "";
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < length; i++) {
     code += chars[Math.floor(Math.random() * chars.length)];
   }
   return code;
+}
+
+function generateRoomCode() {
+  return generateShortCode(5);
 }
 
 function createGroupRoom() {
@@ -1288,16 +1337,4 @@ window.addEventListener("load", async () => {
   bindEndgameModalEvents();
   handleDuelloLinkIfAny();
 });
-
-
-
-
-
-
-
-
-
-
-
-
 
