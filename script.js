@@ -619,11 +619,13 @@ if (CURRENT_GAME_TYPE === "solo" || CURRENT_GAME_TYPE === "duel-guess") {
   }
 
   if (currentRow === ROWS - 1) {
-    setStatus(`Bitti! Gizli kelime: ${SECRET_WORD}`, "#f97316");
+    setStatus("Bitti! Kelimeyi bulamadın.", "#f97316");
     finished = true;
 
-    // ✅ Solo modda kaybedince popup + yeni oyun
+    // ✅ Solo/Düello kaybedince popup
     if (CURRENT_GAME_TYPE === "solo" || CURRENT_GAME_TYPE === "duel-guess") {
+      const titleEl = document.getElementById("endgame-title");
+      if (titleEl) titleEl.textContent = (CURRENT_GAME_TYPE === "duel-guess") ? "Düello bitti" : "Oyun bitti";
       openEndgameModal(SECRET_WORD);
     }
     return;
@@ -644,54 +646,61 @@ function openEndgameModal(word) {
   if (!modal || !wordEl) return;
   wordEl.textContent = word || "";
   modal.classList.add("is-open");
+  modal.setAttribute("aria-hidden", "false");
 }
 
 function closeEndgameModal() {
   const modal = document.getElementById("endgame-modal");
   if (!modal) return;
   modal.classList.remove("is-open");
+  modal.setAttribute("aria-hidden", "true");
 }
 
 function bindEndgameModalEvents() {
+  const modal    = document.getElementById("endgame-modal");
   const btnClose = document.getElementById("endgame-close");
   const btnNew   = document.getElementById("endgame-new-solo");
-  const modal    = document.getElementById("endgame-modal");
 
-  if (btnClose) btnClose.addEventListener("click", closeEndgameModal);
+  if (btnClose) btnClose.addEventListener("click", () => closeEndgameModal());
 
-  // modal dışına tıklayınca kapat
+  // Modal dışına tıklayınca kapat
   if (modal) {
     modal.addEventListener("click", (e) => {
       if (e.target === modal) closeEndgameModal();
     });
   }
 
-  // ✅ Yeni oyun / Tekrar oyna davranışı (mode'a göre)
-if (btnNew) {
-  btnNew.addEventListener("click", () => {
-    closeEndgameModal();
+  // Yeni oyun / tekrar oyna
+  if (btnNew) {
+    btnNew.addEventListener("click", () => {
+      closeEndgameModal();
 
-    // Solo: aynı uzunlukta yeni kelime
-    if (CURRENT_GAME_TYPE === "solo") {
-      try { startSoloWithCurrentMode(); } catch (e) { showScreen("screen-creator"); }
-      return;
-    }
+      // SOLO: aynı uzunlukta yeni random kelime
+      if (CURRENT_GAME_TYPE === "solo") {
+        startSoloWithCurrentMode();
+        return;
+      }
 
-    // Düello tahmin: aynı düelloyu tekrar oyna (aynı gizli kelime + aynı kod)
-    if (CURRENT_GAME_TYPE === "duel-guess") {
-      const badgeMode = document.getElementById("badge-game-mode");
-      if (badgeMode) badgeMode.textContent = `Düello · ${String(CURRENT_MODE || SECRET_WORD.length)} harfli – Tahmin`;
-      resetGameState(SECRET_WORD, CURRENT_CONTEXT_ID);
-      setLeaderboardVisible(false);
-      showScreen("screen-game");
-      setStatus("Düello devam ediyor. Tahmin et!");
-      return;
-    }
+      // DÜELLO TAHMİN: aynı düelloyu tekrar oyna
+      if (CURRENT_GAME_TYPE === "duel-guess") {
+        const badgeMode = document.getElementById("badge-game-mode");
+        if (badgeMode) {
+          const len = String(CURRENT_MODE || (SECRET_WORD ? SECRET_WORD.length : 5));
+          badgeMode.textContent = `Düello · ${len} harfli – Tahmin`;
+        }
+        resetGameState(SECRET_WORD, CURRENT_CONTEXT_ID);
+        setLeaderboardVisible(false);
+        showScreen("screen-game");
+        setStatus("Düello devam ediyor. Tahmin et!");
+        return;
+      }
 
-    // Diğer modlar fallback
-    showScreen("screen-creator");
-  });
-}}
+      // Diğer modlar: menüye dön
+      showScreen("screen-home");
+    });
+  }
+}
+
 
 function startSoloWithCurrentMode() {
   // CURRENT_MODE: "3".."8" veya mod value
