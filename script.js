@@ -16,6 +16,30 @@ const DEFAULT_THEME = {
   tileCorrect:   "#16a34a",
   tilePresent:   "#eab308",
   tileAbsent:    "#111827",
+
+// ===== Solo bitiş popup butonları =====
+const endModal = document.getElementById("endgame-modal");
+const btnNewSolo = document.getElementById("endgame-new-solo");
+const btnClose = document.getElementById("endgame-close");
+  const btnClose2 = document.getElementById("endgame-close-2");
+
+if (btnNewSolo) {
+  btnNewSolo.addEventListener("click", () => {
+    restartSoloSameMode();
+  });
+}
+if (btnClose) {
+  btnClose.addEventListener("click", () => {
+    hideEndgameModal();
+  });
+}
+// Overlay dışına tıklayınca kapat
+if (endModal) {
+  endModal.addEventListener("click", (e) => {
+    if (e.target === endModal) hideEndgameModal();
+  });
+}
+
 };
 
 /* ================== GLOBAL STATE ================== */
@@ -367,6 +391,48 @@ function renderLeaderboard(rows) {
   });
 }
 
+/* ================== SOLO BİTİŞ POPUP ================== */
+function showSoloLoseModal(secretWord) {
+  const overlay = document.getElementById("endgame-modal");
+  const wordEl  = document.getElementById("endgame-word");
+  if (!overlay || !wordEl) return;
+
+  wordEl.textContent = secretWord || "";
+  overlay.classList.add("is-open");
+}
+
+function hideEndgameModal() {
+  const overlay = document.getElementById("endgame-modal");
+  if (!overlay) return;
+  overlay.classList.remove("is-open");
+}
+
+function restartSoloSameMode() {
+  const targetLen = parseInt(CURRENT_MODE, 10) || 5;
+  const modeStr   = String(targetLen);
+
+  let word = pickRandomWord(modeStr);
+  word = trUpper(word).replace(/[^A-ZÇĞİÖŞÜI]/g, "");
+
+  if (word.length > targetLen) {
+    word = word.slice(0, targetLen);
+  } else {
+    while (word.length < targetLen) word += "A";
+  }
+
+  const contextId = `solo:${modeStr}`;
+
+  const badgeMode = document.getElementById("badge-game-mode");
+  const badgeRoom = document.getElementById("badge-room-info");
+  if (badgeMode) badgeMode.textContent = `Solo · ${targetLen} harfli`;
+  if (badgeRoom) badgeRoom.textContent = "";
+
+  hideEndgameModal();
+  resetGameState(word, contextId);
+  setLeaderboardVisible(false);
+  showScreen("screen-game");
+}
+
 function setLeaderboardVisible(isVisible) {
   const panel = document.getElementById("leaderboard-panel");
   if (!panel) return;
@@ -593,6 +659,9 @@ function submitGuess() {
   }
 
   if (currentRow === ROWS - 1) {
+    if (CURRENT_GAME_TYPE === "solo") {
+      showSoloLoseModal(SECRET_WORD);
+    }
     setStatus(`Bitti! Gizli kelime: ${SECRET_WORD}`, "#f97316");
     finished = true;
     return;
