@@ -51,17 +51,10 @@ html, body {
   color: var(--text-main);
 }
 
-:root { --vh: 1vh; }
-
-
-
 body {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100dvh;
-  min-height: calc(var(--vh, 1vh) * 100);
-  padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
 }
 
 #app {
@@ -612,7 +605,6 @@ select {
 
 /* SOLO endgame modal */
 .endgame-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);z-index:9999;padding:20px}
-.endgame-modal[aria-hidden="true"]{display:none}
 .endgame-modal.is-open{display:flex}
 .endgame-card{width:min(420px,92vw);background:#0b1220;border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
 .endgame-card h3{margin:0 0 10px 0}
