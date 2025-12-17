@@ -1375,6 +1375,14 @@ window.addEventListener("load", async () => {
   bindEndgameModalEvents();
   handleDuelloLinkIfAny();
 });
+// PWA Service Worker register
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/hiddenword/sw.js");
+  });
+}
+
+
 
 
 
