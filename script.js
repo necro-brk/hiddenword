@@ -18,21 +18,6 @@ const DEFAULT_THEME = {
   tileAbsent:    "#111827",
 };
 
-
-/* ================== MOBILE VIEWPORT HEIGHT FIX (100vh / address bar) ================== */
-(function setVhVar(){
-  const set = () => {
-    const vh = window.innerHeight * 0.01;
-    document.documentElement.style.setProperty("--vh", `${vh}px`);
-  };
-  set();
-  window.addEventListener("resize", set, { passive: true });
-  window.addEventListener("orientationchange", set, { passive: true });
-  setTimeout(set, 50);
-  setTimeout(set, 250);
-})();
-
-
 /* ================== GLOBAL STATE ================== */
 
 let CURRENT_SCREEN     = "screen-home";
@@ -61,6 +46,14 @@ let LEADERBOARD_DATA = [];
 
 let playerNameCache = "";
 
+
+/* ================== MOBİL VIEWPORT FIX (iOS 100vh zıplaması) ================== */
+function applyViewportHeightFix() {
+  const vh = window.innerHeight * 0.01;
+  document.documentElement.style.setProperty("--vh", `${vh}px`);
+}
+window.addEventListener("resize", applyViewportHeightFix);
+window.addEventListener("orientationchange", applyViewportHeightFix);
 /* ================== FIREBASE YARDIMCI FONKSİYONLAR ================== */
 
 function initFirebaseDb() {
@@ -659,7 +652,13 @@ function openEndgameModal(word) {
   const modal = document.getElementById("endgame-modal");
   const wordEl = document.getElementById("endgame-word");
   if (!modal || !wordEl) return;
+
   wordEl.textContent = word || "";
+
+  // Güvenli başlangıç: hidden attribute + .hidden class ikisini de kaldır
+  modal.removeAttribute("hidden");
+  modal.classList.remove("hidden");
+
   modal.classList.add("is-open");
   modal.setAttribute("aria-hidden", "false");
 }
@@ -667,8 +666,13 @@ function openEndgameModal(word) {
 function closeEndgameModal() {
   const modal = document.getElementById("endgame-modal");
   if (!modal) return;
+
   modal.classList.remove("is-open");
   modal.setAttribute("aria-hidden", "true");
+
+  // Menülerde asla görünmesin diye iki kat kilitle
+  modal.classList.add("hidden");
+  modal.setAttribute("hidden", "");
 }
 
 function bindEndgameModalEvents() {
@@ -1363,6 +1367,7 @@ if (btnBackCreator) {
 /* ================== WINDOW LOAD ================== */
 
 window.addEventListener("load", async () => {
+  applyViewportHeightFix();
   if (window.WORDS_READY) {
     try { await window.WORDS_READY; } catch (e) { console.warn(e); }
   }
