@@ -29,157 +29,6 @@
   --shadow-panel: 0 18px 45px rgba(15,23,42,0.9);
 }
 
-
-/* ================== MOBILE READY (VIEWPORT + SAFE AREA) ================== */
-:root{
-  --vh: 1vh; /* JS ile güncellenecek */
-  --sat: env(safe-area-inset-top, 0px);
-  --sar: env(safe-area-inset-right, 0px);
-  --sab: env(safe-area-inset-bottom, 0px);
-  --sal: env(safe-area-inset-left, 0px);
-  --kb-h: 270px; /* mobilde sabit klavye için tahmini yükseklik */
-}
-
-html, body{
-  height: 100%;
-}
-
-body{
-  /* iOS address bar zıplaması için 100vh yerine --vh */
-  min-height: calc(var(--vh) * 100);
-  padding: calc(var(--sat)) calc(var(--sar)) calc(var(--sab)) calc(var(--sal));
-  overflow: hidden; /* sayfa kaymasın, içerik kendi içinde yönetilsin */
-  align-items: flex-start;
-  padding-top: clamp(8px, 4vh, 40px);
-}
-
-#app{
-  max-height: calc(var(--vh) * 100 - var(--sat) - var(--sab));
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* iOS input zoom engeli */
-input, select, textarea{ font-size: 16px; }
-
-/* ================== HTML CLASS ALIAS (INLINE CSS'SİZ) ================== */
-.subtitle{ text-align:center; font-size:13px; color: var(--text-soft); margin: 0 0 18px 0; }
-
-.main-menu-buttons{
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-  max-width:260px;
-  margin: 0 auto;
-}
-
-.main-menu-buttons button{
-  width:100%;
-}
-
-.main-menu-buttons button.primary{ /* eski 'primary' class'ı */
-  background: linear-gradient(135deg, var(--primary), var(--primary-soft));
-  color:#fff;
-  box-shadow: 0 8px 18px rgba(37,99,235,0.4);
-}
-
-.top-bar{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:8px;
-  margin-bottom:12px;
-}
-
-.back-btn{
-  border:none;
-  border-radius:999px;
-  padding:6px 12px;
-  font-size:12px;
-  cursor:pointer;
-  background:#111827;
-  color:#e5e7eb;
-}
-
-button.gradient{
-  border:none;
-  border-radius:8px;
-  padding:10px 16px;
-  font-size:13px;
-  font-weight:600;
-  cursor:pointer;
-  background: linear-gradient(135deg,#22c55e,#16a34a);
-  color:#fff;
-  box-shadow: 0 8px 18px rgba(22,163,74,0.5);
-  white-space:nowrap;
-}
-
-/* ================== RESPONSIVE (MOBİL) ================== */
-@media (max-width: 600px){
-  body{
-    padding-top: 8px;
-  }
-
-  #app{
-    width: 100%;
-    max-width: 100%;
-    padding: 8px 8px calc(var(--kb-h) + var(--sab) + 12px);
-    overflow: hidden; /* içerik taşmasın */
-  }
-
-  .panel{
-    padding: 12px 10px 14px;
-  }
-
-  /* Oyun ekranında panel içi düzen */
-  #screen-game .panel{
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-    max-height: calc(var(--vh) * 100 - var(--sat) - var(--sab) - 8px);
-  }
-
-  /* Board, klavye ile çakışmasın */
-  #board{
-    max-width: min(520px, 96vw);
-    margin: 6px auto 8px;
-  }
-
-  /* Tile font boyutu biraz esnek */
-  .tile{ font-size: clamp(16px, 4.8vw, 22px); }
-
-  /* 📱 Klavye: altta sabit, safe-area destekli */
-  #keyboard{
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    padding: 6px 6px calc(var(--sab) + 10px);
-    background: #020617;
-    box-shadow: 0 -4px 16px rgba(0,0,0,0.65);
-    z-index: 50;
-    max-width: 100%;
-    margin: 0;
-  }
-
-  .kb-row{ gap: 4px; }
-
-  .key{
-    flex: 1 1 auto;
-    min-height: 44px;
-    padding: 8px 0;
-    font-size: 16px;
-    border-radius: 10px;
-  }
-
-  .key.special{
-    flex: 1.4 1 auto;
-    font-size: 14px;
-  }
-}
-
-
-
 /* ================== GENEL GÖRÜNÜM ================== */
 
 * {
@@ -202,10 +51,17 @@ html, body {
   color: var(--text-main);
 }
 
+:root { --vh: 1vh; }
+
+
+
 body {
   display: flex;
   justify-content: center;
   align-items: center;
+  min-height: 100dvh;
+  min-height: calc(var(--vh, 1vh) * 100);
+  padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
 }
 
 #app {
@@ -672,7 +528,15 @@ select {
   margin-top: 14px;
 }
 
-body {
+/* ================== RESPONSIVE ================== */
+
+@media (max-width: 600px) {
+  /* Gövdeyi yukarı al, yükseklik zorlamasını kaldır */
+  html, body {
+    height: auto;
+  }
+
+  body {
     align-items: flex-start;
     padding-top: 8px;
   }
@@ -691,7 +555,53 @@ body {
   .creator-row,
   .solo-row {
     flex-direction: column;
-    align-items: 
+    align-items: stretch;
+  }
+
+  .panel-header {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  /* Tahta: biraz küçült, daha az yer kaplasın */
+  #board {
+    transform: scale(0.9);
+    transform-origin: top center;
+    margin-top: 4px;
+    margin-bottom: 8px;
+  }
+
+  /* Mobil klavye: daha büyük ve satırı dolduran tuşlar */
+  #keyboard {
+    max-width: 100%;
+    margin: 6px auto 0;
+  }
+
+  .kb-row {
+    gap: 3px;
+  }
+
+  .key {
+    flex: 1 1 auto;
+    min-height: 44px;
+    padding: 8px 0;
+    font-size: 16px;
+    border-radius: 10px;
+  }
+
+  .key.special {
+    flex: 1.5 1 auto;
+    font-size: 14px;
+  }
+}
+  .key-enter {
+    flex: 5;
+  }
+
+  .key-backspace {
+    flex: 1.4;
+  }
+
 /* Genel hidden sınıfı */
 .hidden {
   display: none !important;
@@ -702,6 +612,7 @@ body {
 
 /* SOLO endgame modal */
 .endgame-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);z-index:9999;padding:20px}
+.endgame-modal[aria-hidden="true"]{display:none}
 .endgame-modal.is-open{display:flex}
 .endgame-card{width:min(420px,92vw);background:#0b1220;border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
 .endgame-card h3{margin:0 0 10px 0}
