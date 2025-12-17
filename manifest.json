@@ -1,0 +1,16 @@
+{
+  "name": "Hidden Word",
+  "short_name": "HiddenWord",
+  "start_url": "/hiddenword/",
+  "scope": "/hiddenword/",
+  "display": "standalone",
+  "background_color": "#050813",
+  "theme_color": "#050813",
+  "orientation": "portrait",
+  "description": "Çok modlu kelime tahmin oyunu: Solo, Düello ve Grup Yarışı.",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
