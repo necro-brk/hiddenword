@@ -1,14 +1,17 @@
 // DEPLOY_CHECK_123
 
-const CACHE_NAME = "hiddenword-v1";
+const CACHE_NAME = "hiddenword-v2";
 
 const ASSETS = [
-  "/hiddenword/",
-  "/hiddenword/index.html",
-  "/hiddenword/style.css",
-  "/hiddenword/script.js",
-  "/hiddenword/words_tr.js",
-  "/hiddenword/manifest.json"
+  "./",
+  "./index.html",
+  "./style.css",
+  "./script.js",
+  "./words_tr.js",
+  "./manifest.json",
+  "./icons/icon-192.png",
+  "./icons/icon-512.png",
+  "./icons/maskable-512.png"
 ];
 
 self.addEventListener("install", (event) => {
