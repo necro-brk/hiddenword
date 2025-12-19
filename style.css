@@ -1,32 +1,32 @@
 /* ================== TEMEL TEMA DEĞİŞKENLERİ ================== */
 :root {
-  --bg-body: #050813;
-  --bg-panel: #020617;
-  --bg-panel-soft: #020617;
-  --border-panel: #1f2937;
+  --bg-body: #10131c;
+  --bg-panel: #2e3240;
+  --bg-panel-soft: #1a1e2a;
+  --border-panel: #3a3f52;
 
   --text-main: #f9fafb;
   --text-soft: #9ca3af;
   --text-muted: #6b7280;
 
-  --primary: #2563eb;
-  --primary-soft: #1d4ed8;
-  --secondary: #4b5563;
-  --accent: #6366f1;
+  --primary: #6cbc40;
+  --primary-soft: #51b63f;
+  --secondary: #87898c;
+  --accent: #efca21;
   --danger: #f97316;
 
-  --badge-bg: rgba(16,185,129,0.12);
-  --badge-text: #6ee7b7;
+  --badge-bg: rgba(108,188,64,0.14);
+  --badge-text: #9dd048;
 
-  --key-bg: #111827;
-  --key-fg: #e5e7eb;
+  --key-bg: #2e3240;
+  --key-fg: #f0f1ef;
 
-  --tile-border: #1f2937;
-  --tile-correct: #16a34a;
-  --tile-present: #eab308;
-  --tile-absent: #111827;
+  --tile-border: #3a3f52;
+  --tile-correct: #6cbc40;
+  --tile-present: #efca21;
+  --tile-absent: #2e3240;
 
-  --shadow-panel: 0 18px 45px rgba(15,23,42,0.9);
+  --shadow-panel: 0 18px 45px rgba(0,0,0,0.55);
 }
 
 /* ================== GENEL GÖRÜNÜM ================== */
