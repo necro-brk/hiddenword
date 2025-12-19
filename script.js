@@ -27,10 +27,10 @@ const THEME_KEY = "hiddenWordTheme_v1";
 const LB_PREFIX = "hiddenWordLB_";
 
 const DEFAULT_THEME = {
-  keyboardColor: "#111827",
-  tileCorrect:   "#16a34a",
-  tilePresent:   "#eab308",
-  tileAbsent:    "#111827",
+  keyboardColor: "#2e3240",
+  tileCorrect:   "#6cbc40",
+  tilePresent:   "#efca21",
+  tileAbsent:    "#2e3240",
 };
 
 /* ================== GLOBAL STATE ================== */
