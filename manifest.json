@@ -4,8 +4,8 @@
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#050813",
-  "theme_color": "#050813",
+  "background_color": "#10131c",
+  "theme_color": "#10131c",
   "orientation": "portrait",
   "description": "Çok modlu kelime tahmin oyunu: Solo, Düello ve Grup Yarışı.",
   "icons": [
