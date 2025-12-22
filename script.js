@@ -24,13 +24,15 @@ const dlog = (...args) => { if (DEBUG) console.log(...args); };
 
 const NAME_KEY  = "hiddenWordPlayerName_v2";
 const THEME_KEY = "hiddenWordTheme_v1";
+
+const FREE_PLACE_KEY = "hiddenWordFreePlacement_v1";
 const LB_PREFIX = "hiddenWordLB_";
 
 const DEFAULT_THEME = {
-  keyboardColor: "#2e3240",
-  tileCorrect:   "#6cbc40",
-  tilePresent:   "#efca21",
-  tileAbsent:    "#2e3240",
+  keyboardColor: "#111827",
+  tileCorrect:   "#16a34a",
+  tilePresent:   "#eab308",
+  tileAbsent:    "#111827",
 };
 
 /* ================== GLOBAL STATE ================== */
@@ -40,6 +42,8 @@ let CURRENT_GAME_TYPE  = null;   // "solo", "duel-create", "duel-guess", "group"
 let CURRENT_MODE       = "5";    // string olarak harf sayısı: "3".."8"
 let CURRENT_ROOM       = null;   // Grup modu oda kodu
 let CURRENT_CONTEXT_ID = "default"; // Leaderboard context
+let FREE_PLACEMENT     = true;   // Serbest yerleştirme modu
+let selectedCol        = 0;      // Serbest modda seçili kolon
 let FIREBASE_DB        = null;   // 🔥 Realtime Database referansı
 
 let SECRET_WORD = "";
@@ -300,11 +304,30 @@ function loadThemeFromStorage() {
   }
 }
 
+function loadFreePlacementFromStorage() {
+  try {
+    const raw = localStorage.getItem(FREE_PLACE_KEY);
+    if (raw === null) {
+      FREE_PLACEMENT = true; // varsayılan: açık
+      return;
+    }
+    FREE_PLACEMENT = (raw === "true");
+  } catch (e) {
+    FREE_PLACEMENT = true;
+  }
+}
+
+function saveFreePlacementToStorage(value) {
+  FREE_PLACEMENT = !!value;
+  localStorage.setItem(FREE_PLACE_KEY, String(FREE_PLACEMENT));
+}
+
 function loadSettingsIntoUI() {
   const kb = document.getElementById("set-keyboard-color");
   const c  = document.getElementById("set-correct-color");
   const p  = document.getElementById("set-present-color");
   const a  = document.getElementById("set-absent-color");
+  const fp = document.getElementById("set-free-placement");
 
   if (!kb || !c || !p || !a) return;
 
@@ -312,6 +335,7 @@ function loadSettingsIntoUI() {
   c.value  = CURRENT_THEME.tileCorrect   || DEFAULT_THEME.tileCorrect;
   p.value  = CURRENT_THEME.tilePresent   || DEFAULT_THEME.tilePresent;
   a.value  = CURRENT_THEME.tileAbsent    || DEFAULT_THEME.tileAbsent;
+  if (fp) fp.checked = !!FREE_PLACEMENT;
 }
 
 function saveSettingsFromUI() {
@@ -319,6 +343,7 @@ function saveSettingsFromUI() {
   const c  = document.getElementById("set-correct-color");
   const p  = document.getElementById("set-present-color");
   const a  = document.getElementById("set-absent-color");
+  const fp = document.getElementById("set-free-placement");
 
   const theme = {
     keyboardColor: kb.value || DEFAULT_THEME.keyboardColor,
@@ -329,6 +354,7 @@ function saveSettingsFromUI() {
 
   localStorage.setItem(THEME_KEY, JSON.stringify(theme));
   applyTheme(theme);
+  if (fp) saveFreePlacementToStorage(fp.checked);
 }
 
 /* ================== LEADERBOARD (LOCAL + ONLINE) ================== */
@@ -431,6 +457,9 @@ function resetGameState(secretWord, contextId) {
     for (let c = 0; c < COLS; c++) {
       const tile  = document.createElement("div");
       tile.className = "tile";
+      if (FREE_PLACEMENT) {
+        tile.addEventListener("click", () => selectTile(r, c));
+      }
       const inner = document.createElement("div");
       inner.className = "tile-inner";
       inner.textContent = "";
@@ -438,6 +467,13 @@ function resetGameState(secretWord, contextId) {
       boardElem.appendChild(tile);
       tiles[r][c] = tile;
     }
+  }
+
+
+  if (FREE_PLACEMENT) {
+    selectedCol = 0;
+    // ilk kareyi seç
+    setTimeout(() => selectTile(0, 0), 0);
   }
 
   buildKeyboard();
@@ -538,12 +574,24 @@ function handleKey(key) {
 
   if (finished) return;
 
-
   if (key === "ENTER") {
     submitGuess();
     return;
   }
+
   if (key === "BACK") {
+    if (FREE_PLACEMENT) {
+      // Seçili kare varsa onu sil, yoksa en sondaki dolu kareyi sil
+      let c = (typeof selectedCol === "number") ? selectedCol : -1;
+      if (c < 0 || c >= COLS) c = findLastFilledColInRow(currentRow);
+      if (c >= 0) {
+        setTile(currentRow, c, "");
+        selectTile(currentRow, c);
+      }
+      return;
+    }
+
+    // klasik (soldan sağa)
     if (currentCol > 0) {
       currentCol--;
       setTile(currentRow, currentCol, "");
@@ -551,10 +599,26 @@ function handleKey(key) {
     return;
   }
 
+  // Harf girişi
+  if (FREE_PLACEMENT) {
+    // seçili kare yoksa ilk boş kareyi seç
+    let c = (typeof selectedCol === "number") ? selectedCol : -1;
+    if (c < 0 || c >= COLS) c = findFirstEmptyColInRow(currentRow);
+    if (c === -1) return; // satır dolu
+    setTile(currentRow, c, key);
+
+    // Profesyonel his: bir sonraki kareyi otomatik seç (istersen kapatırız)
+    const next = (c + 1 < COLS) ? (c + 1) : c;
+    selectTile(currentRow, next);
+    return;
+  }
+
+  // klasik (soldan sağa)
   if (currentCol >= COLS) return;
   setTile(currentRow, currentCol, key);
   currentCol++;
 }
+
 
 function setTile(r, c, ch) {
   const tile  = tiles[r][c];
@@ -562,6 +626,37 @@ function setTile(r, c, ch) {
   inner.textContent = ch;
   if (ch) tile.classList.add("tile-filled");
   else tile.classList.remove("tile-filled");
+}
+
+function clearSelectedTile() {
+  const boardElem = document.getElementById("board");
+  if (!boardElem) return;
+  boardElem.querySelectorAll(".tile-selected").forEach(el => el.classList.remove("tile-selected"));
+}
+
+function selectTile(r, c) {
+  if (!FREE_PLACEMENT) return;
+  if (r !== currentRow) return; // sadece aktif satır
+  selectedCol = c;
+  clearSelectedTile();
+  const tile = tiles[r][c];
+  if (tile) tile.classList.add("tile-selected");
+}
+
+function findFirstEmptyColInRow(r) {
+  for (let c = 0; c < COLS; c++) {
+    const ch = tiles[r][c].querySelector(".tile-inner").textContent || "";
+    if (!ch) return c;
+  }
+  return -1;
+}
+
+function findLastFilledColInRow(r) {
+  for (let c = COLS - 1; c >= 0; c--) {
+    const ch = tiles[r][c].querySelector(".tile-inner").textContent || "";
+    if (ch) return c;
+  }
+  return -1;
 }
 
 function getCurrentGuess() {
@@ -648,6 +743,10 @@ if (CURRENT_GAME_TYPE === "solo" || CURRENT_GAME_TYPE === "duel-guess") {
 
   currentRow++;
   currentCol = 0;
+  if (FREE_PLACEMENT) {
+    selectedCol = 0;
+    selectTile(currentRow, 0);
+  }
   setStatus("Yeni bir tahmin yap!");
 }
 
@@ -1342,6 +1441,7 @@ if (btnBackCreator) {
   if (btnSettingsReset) {
     btnSettingsReset.addEventListener("click", () => {
       applyTheme(DEFAULT_THEME);
+      saveFreePlacementToStorage(true);
       loadSettingsIntoUI();
     });
   }
@@ -1371,6 +1471,7 @@ window.addEventListener("load", async () => {
 
   initFirebaseDb();          // 🔥 Firebase Realtime DB'yi başlat
   loadThemeFromStorage();
+  loadFreePlacementFromStorage();
   setupUIEvents();
   bindEndgameModalEvents();
   handleDuelloLinkIfAny();
