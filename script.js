@@ -532,6 +532,31 @@ function createKey(label, value, isSpecial) {
   btn.textContent = label;
   btn.dataset.value = value;
   btn.addEventListener("click", () => handleKey(value));
+  // Basılı tutunca seri silme (sadece BACK)
+  if (value === "BACK") {
+    let t = null;
+    let i = null;
+    const stop = () => {
+      if (t) clearTimeout(t);
+      if (i) clearInterval(i);
+      t = null; i = null;
+    };
+
+    btn.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      handleKey("BACK"); // anında 1 kez sil
+
+      stop();
+      t = setTimeout(() => {
+        i = setInterval(() => handleKey("BACK"), 70);
+      }, 250);
+    });
+
+    btn.addEventListener("pointerup", stop);
+    btn.addEventListener("pointercancel", stop);
+    btn.addEventListener("pointerleave", stop);
+  }
+
   return btn;
 }
 
@@ -581,14 +606,35 @@ function handleKey(key) {
 
   if (key === "BACK") {
     if (FREE_PLACEMENT) {
-      // Seçili kare varsa onu sil, yoksa en sondaki dolu kareyi sil
+      // Akıllı silme:
+      // - Seçili kare doluysa: sil ve bir sola kay
+      // - Seçili kare boşsa: soldaki en yakın dolu kareyi bul, sil ve sola kay
+      // - Seçim yoksa: en sağdaki dolu kareyi silmeye başla
       let c = (typeof selectedCol === "number") ? selectedCol : -1;
       if (c < 0 || c >= COLS) c = findLastFilledColInRow(currentRow);
-      if (c >= 0) {
+      if (c < 0) return; // satır boş
+
+      const getCh = (rr, cc) => (tiles[rr][cc].querySelector(".tile-inner").textContent || "").trim();
+
+      // Seçili kare doluysa: sil
+      if (getCh(currentRow, c)) {
         setTile(currentRow, c, "");
-        selectTile(currentRow, c);
+        selectTile(currentRow, Math.max(c - 1, 0));
+        return;
       }
+
+      // Seçili kare boşsa: solda dolu ara
+      for (let cc = c - 1; cc >= 0; cc--) {
+        if (getCh(currentRow, cc)) {
+          setTile(currentRow, cc, "");
+          selectTile(currentRow, Math.max(cc - 1, 0));
+          return;
+        }
+      }
+
+      // solda da yoksa: satır zaten boş
       return;
+    }return;
     }
 
     // klasik (soldan sağa)
