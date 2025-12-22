@@ -775,3 +775,38 @@ input[type="color"]{
   border-color: rgba(240,195,32,0.30);
   font-weight: 650;
 }
+
+
+/* ===== Home menu: give each main button brand color (not only Solo) ===== */
+#btn-home-duel{
+  background: linear-gradient(90deg, rgba(240,195,32,0.90), rgba(240,195,32,0.68));
+  color: var(--button-text);
+  border: 1px solid rgba(240,195,32,0.35);
+  box-shadow: 0 10px 30px rgba(240,195,32,0.14);
+}
+
+#btn-home-group{
+  background: linear-gradient(90deg, rgba(105,210,74,0.85), rgba(240,195,32,0.65));
+  color: var(--button-text);
+  border: 1px solid rgba(105,210,74,0.30);
+  box-shadow: 0 10px 30px rgba(105,210,74,0.14);
+}
+
+#btn-home-settings{
+  background: linear-gradient(90deg, rgba(43,51,66,0.85), rgba(16,24,38,0.90));
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,0.10);
+}
+
+#btn-home-settings:hover{
+  border-color: rgba(105,210,74,0.22);
+  box-shadow: 0 10px 26px rgba(0,0,0,0.35);
+}
+
+/* Keep hover feel consistent */
+#btn-home-duel:hover{
+  background: linear-gradient(90deg, rgba(240,195,32,0.96), rgba(105,210,74,0.62));
+}
+#btn-home-group:hover{
+  background: linear-gradient(90deg, rgba(240,195,32,0.92), rgba(105,210,74,0.78));
+}
