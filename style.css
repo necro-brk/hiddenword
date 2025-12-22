@@ -1,5 +1,23 @@
 /* ================== TEMEL TEMA DEĞİŞKENLERİ ================== */
-:root {
+:root{
+  /* Brand (logo) colors */
+  --brand-green: #69d24a;
+  --brand-yellow:#f0c320;
+  --brand-slate: #101826;
+  --brand-steel: #2b3342;
+
+  /* App base */
+  --bg-0: #050914;
+  --bg-1: #070f1e;
+  --panel: rgba(10, 18, 35, 0.75);
+  --text: #eaf0ff;
+  --muted: rgba(234,240,255,0.68);
+
+  /* Accents */
+  --primary: var(--brand-green);
+  --primary-2: var(--brand-yellow);
+  --button-text: #071018;
+
   --bg-body: #050813;
   --bg-panel: #020617;
   --bg-panel-soft: #020617;
@@ -98,21 +116,6 @@ body {
   font-size: 13px;
   color: var(--text-soft);
   margin: 0 0 18px 0;
-}
-
-.home-brand{
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:10px;
-  margin-bottom:6px;
-}
-
-.home-logo{
-  width:72px;
-  height:72px;
-  border-radius:18px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
 }
 
 .panel-header {
@@ -624,3 +627,86 @@ select {
 .endgame-card{width:min(420px,92vw);background:#0b1220;border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
 .endgame-card h3{margin:0 0 10px 0}
 .endgame-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:14px}
+
+
+/* ===== Branding alignment with logo palette ===== */
+body{
+  color: var(--text);
+  background:
+    radial-gradient(900px 600px at 35% 25%, rgba(105,210,74,0.10), transparent 55%),
+    radial-gradient(900px 600px at 65% 45%, rgba(240,195,32,0.10), transparent 55%),
+    radial-gradient(1100px 800px at 50% 15%, rgba(90,120,255,0.10), transparent 55%),
+    linear-gradient(180deg, var(--bg-1), var(--bg-0));
+}
+
+/* Centered home header */
+.menu-header.center{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+/* Logo: premium placement + subtle animation */
+.app-logo{
+  width: 96px;
+  height: 96px;
+  margin-bottom: 14px;
+  border-radius: 20px;
+  box-shadow:
+    0 12px 40px rgba(0,0,0,0.55),
+    0 0 0 1px rgba(255,255,255,0.08);
+  animation: logoPop 420ms ease-out both;
+  transform-origin: 50% 50%;
+}
+
+@keyframes logoPop{
+  from{ opacity: 0; transform: translateY(6px) scale(0.94); }
+  to{ opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.title-main{
+  letter-spacing: 0.22em;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.subtitle-main{
+  opacity: 0.7;
+  font-size: 0.95rem;
+  max-width: 420px;
+}
+
+/* Primary button branding (covers common selectors) */
+.btn-primary,
+.menu button.primary,
+button.primary,
+.menu-btn.primary,
+#screen-home button.primary,
+#screen-home .primary{
+  background: linear-gradient(90deg, rgba(105,210,74,0.92), rgba(105,210,74,0.72));
+  color: var(--button-text);
+  border: 1px solid rgba(105,210,74,0.35);
+  box-shadow: 0 10px 30px rgba(105,210,74,0.18);
+}
+
+.btn-primary:hover,
+.menu button.primary:hover,
+button.primary:hover,
+.menu-btn.primary:hover,
+#screen-home button.primary:hover,
+#screen-home .primary:hover{
+  background: linear-gradient(90deg, rgba(240,195,32,0.92), rgba(105,210,74,0.78));
+  border-color: rgba(240,195,32,0.35);
+}
+
+/* Panel styling hint */
+.panel, .card, .menu-container, .screen-card{
+  background: var(--panel);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow:
+    0 0 0 1px rgba(240,195,32,0.06),
+    0 24px 80px rgba(0,0,0,0.55);
+}
