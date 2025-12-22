@@ -1,6 +1,6 @@
-// DEPLOY_CHECK_123
+// DEPLOY_CHECK_124
 
-const CACHE_NAME = "hiddenword-v2";
+const CACHE_NAME = "hiddenword-v3";
 
 const ASSETS = [
   "./",
