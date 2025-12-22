@@ -24,8 +24,6 @@ const dlog = (...args) => { if (DEBUG) console.log(...args); };
 
 const NAME_KEY  = "hiddenWordPlayerName_v2";
 const THEME_KEY = "hiddenWordTheme_v1";
-
-const FREE_PLACE_KEY = "hiddenWordFreePlacement_v1";
 const LB_PREFIX = "hiddenWordLB_";
 
 const DEFAULT_THEME = {
@@ -42,8 +40,6 @@ let CURRENT_GAME_TYPE  = null;   // "solo", "duel-create", "duel-guess", "group"
 let CURRENT_MODE       = "5";    // string olarak harf sayısı: "3".."8"
 let CURRENT_ROOM       = null;   // Grup modu oda kodu
 let CURRENT_CONTEXT_ID = "default"; // Leaderboard context
-let FREE_PLACEMENT     = true;   // Serbest yerleştirme modu
-let selectedCol        = 0;      // Serbest modda seçili kolon
 let FIREBASE_DB        = null;   // 🔥 Realtime Database referansı
 
 let SECRET_WORD = "";
@@ -54,6 +50,8 @@ let COLS = 5;
 let tiles        = [];
 let currentRow   = 0;
 let currentCol   = 0;
+
+let selectedCol = null; // free-placement selected column
 let finished     = false;
 let keyButtons   = {};
 let keyState     = {};
@@ -304,30 +302,11 @@ function loadThemeFromStorage() {
   }
 }
 
-function loadFreePlacementFromStorage() {
-  try {
-    const raw = localStorage.getItem(FREE_PLACE_KEY);
-    if (raw === null) {
-      FREE_PLACEMENT = true; // varsayılan: açık
-      return;
-    }
-    FREE_PLACEMENT = (raw === "true");
-  } catch (e) {
-    FREE_PLACEMENT = true;
-  }
-}
-
-function saveFreePlacementToStorage(value) {
-  FREE_PLACEMENT = !!value;
-  localStorage.setItem(FREE_PLACE_KEY, String(FREE_PLACEMENT));
-}
-
 function loadSettingsIntoUI() {
   const kb = document.getElementById("set-keyboard-color");
   const c  = document.getElementById("set-correct-color");
   const p  = document.getElementById("set-present-color");
   const a  = document.getElementById("set-absent-color");
-  const fp = document.getElementById("set-free-placement");
 
   if (!kb || !c || !p || !a) return;
 
@@ -335,7 +314,6 @@ function loadSettingsIntoUI() {
   c.value  = CURRENT_THEME.tileCorrect   || DEFAULT_THEME.tileCorrect;
   p.value  = CURRENT_THEME.tilePresent   || DEFAULT_THEME.tilePresent;
   a.value  = CURRENT_THEME.tileAbsent    || DEFAULT_THEME.tileAbsent;
-  if (fp) fp.checked = !!FREE_PLACEMENT;
 }
 
 function saveSettingsFromUI() {
@@ -343,7 +321,6 @@ function saveSettingsFromUI() {
   const c  = document.getElementById("set-correct-color");
   const p  = document.getElementById("set-present-color");
   const a  = document.getElementById("set-absent-color");
-  const fp = document.getElementById("set-free-placement");
 
   const theme = {
     keyboardColor: kb.value || DEFAULT_THEME.keyboardColor,
@@ -354,7 +331,6 @@ function saveSettingsFromUI() {
 
   localStorage.setItem(THEME_KEY, JSON.stringify(theme));
   applyTheme(theme);
-  if (fp) saveFreePlacementToStorage(fp.checked);
 }
 
 /* ================== LEADERBOARD (LOCAL + ONLINE) ================== */
@@ -457,23 +433,24 @@ function resetGameState(secretWord, contextId) {
     for (let c = 0; c < COLS; c++) {
       const tile  = document.createElement("div");
       tile.className = "tile";
-      if (FREE_PLACEMENT) {
-        tile.addEventListener("click", () => selectTile(r, c));
-      }
       const inner = document.createElement("div");
       inner.className = "tile-inner";
       inner.textContent = "";
       tile.appendChild(inner);
       boardElem.appendChild(tile);
       tiles[r][c] = tile;
-    }
-  }
-
-
-  if (FREE_PLACEMENT) {
-    selectedCol = 0;
-    // ilk kareyi seç
-    setTimeout(() => selectTile(0, 0), 0);
+    
+      // Free placement: click a tile to select it
+      tile.addEventListener("click", () => {
+        if (finished) return;
+        if (r !== currentRow) return; // only active row
+        selectedCol = c;
+        currentCol = c + 1; // so typing continues after selected cell
+        // Visual highlight
+        document.querySelectorAll(".tile.selected").forEach(el => el.classList.remove("selected"));
+        tile.classList.add("selected");
+      });
+}
   }
 
   buildKeyboard();
@@ -532,32 +509,22 @@ function createKey(label, value, isSpecial) {
   btn.textContent = label;
   btn.dataset.value = value;
   btn.addEventListener("click", () => handleKey(value));
-  // Basılı tutunca seri silme (sadece BACK)
+  // Backspace: press & hold for rapid delete
   if (value === "BACK") {
     let t = null;
     let i = null;
-    const stop = () => {
-      if (t) clearTimeout(t);
-      if (i) clearInterval(i);
-      t = null; i = null;
-    };
-
+    const stop = () => { if (t) clearTimeout(t); if (i) clearInterval(i); t = null; i = null; };
     btn.addEventListener("pointerdown", (e) => {
       e.preventDefault();
-      handleKey("BACK"); // anında 1 kez sil
-
+      handleKey("BACK");
       stop();
       t = setTimeout(() => {
-        i = setInterval(() => handleKey("BACK"), 70);
+        i = setInterval(() => handleKey("BACK"), 60);
       }, 250);
     });
-
-    btn.addEventListener("pointerup", stop);
-    btn.addEventListener("pointercancel", stop);
-    btn.addEventListener("pointerleave", stop);
+    ["pointerup","pointerleave","pointercancel"].forEach(ev => btn.addEventListener(ev, stop));
   }
-
-  return btn;
+return btn;
 }
 
 function attachKeydown() {
@@ -599,72 +566,79 @@ function handleKey(key) {
 
   if (finished) return;
 
+
   if (key === "ENTER") {
     submitGuess();
     return;
   }
-
   if (key === "BACK") {
-    if (FREE_PLACEMENT) {
-      // Akıllı silme:
-      // - Seçili kare doluysa: sil ve bir sola kay
-      // - Seçili kare boşsa: soldaki en yakın dolu kareyi bul, sil ve sola kay
-      // - Seçim yoksa: en sağdaki dolu kareyi silmeye başla
-      let c = (typeof selectedCol === "number") ? selectedCol : -1;
-      if (c < 0 || c >= COLS) c = findLastFilledColInRow(currentRow);
-      if (c < 0) return; // satır boş
+  // Free placement friendly backspace:
+  // - If a cell is selected, delete that cell if it has a letter.
+  // - If selected cell is empty, delete the nearest filled cell to the left.
+  // - If no selection, behave like classic: delete last filled from the left-to-right cursor.
+  const r = currentRow;
 
-      const getCh = (rr, cc) => (tiles[rr][cc].querySelector(".tile-inner").textContent || "").trim();
+  // Choose a starting column
+  let c = (selectedCol != null) ? selectedCol : (currentCol - 1);
 
-      // Seçili kare doluysa: sil
-      if (getCh(currentRow, c)) {
-        setTile(currentRow, c, "");
-        selectTile(currentRow, Math.max(c - 1, 0));
-        return;
-      }
+  // If c is out of range, clamp
+  if (c < 0) c = 0;
+  if (c >= COLS) c = COLS - 1;
 
-      // Seçili kare boşsa: solda dolu ara
-      for (let cc = c - 1; cc >= 0; cc--) {
-        if (getCh(currentRow, cc)) {
-          setTile(currentRow, cc, "");
-          selectTile(currentRow, Math.max(cc - 1, 0));
-          return;
-        }
-      }
-
-      // solda da yoksa: satır zaten boş
+  // If selected but empty, walk left to find something to delete
+  if (getTileChar(r, c) === "") {
+    let k = c;
+    while (k > 0 && getTileChar(r, k) === "") k--;
+    // If even col 0 is empty, nothing left to delete → clear selection + keep cursor at 0
+    if (getTileChar(r, k) === "") {
+      selectedCol = null;
+      currentCol = 0;
       return;
-    }return;
     }
-
-    // klasik (soldan sağa)
-    if (currentCol > 0) {
-      currentCol--;
-      setTile(currentRow, currentCol, "");
-    }
-    return;
+    c = k;
   }
 
-  // Harf girişi
-  if (FREE_PLACEMENT) {
-    // seçili kare yoksa ilk boş kareyi seç
-    let c = (typeof selectedCol === "number") ? selectedCol : -1;
-    if (c < 0 || c >= COLS) c = findFirstEmptyColInRow(currentRow);
-    if (c === -1) return; // satır dolu
-    setTile(currentRow, c, key);
+  // Delete
+  setTile(r, c, "");
 
-    // Profesyonel his: bir sonraki kareyi otomatik seç (istersen kapatırız)
-    const next = (c + 1 < COLS) ? (c + 1) : c;
-    selectTile(currentRow, next);
-    return;
+  // Move selection/cursor left for fast consecutive deletes
+  if (selectedCol != null) {
+    selectedCol = Math.max(c - 1, 0);
   }
+  // Keep classic cursor in sync (so Enter/typing still works in classic)
+  currentCol = Math.max(c, 0);
 
-  // klasik (soldan sağa)
-  if (currentCol >= COLS) return;
-  setTile(currentRow, currentCol, key);
-  currentCol++;
+  return;
 }
 
+  // Place letter either into selected cell (free placement) or current cursor (classic)
+if (selectedCol != null) {
+  const c = selectedCol;
+  if (c < 0 || c >= COLS) return;
+  setTile(currentRow, c, key);
+  // advance selection to the right for faster typing, but keep within row
+  selectedCol = (c < COLS - 1) ? (c + 1) : (COLS - 1);
+  currentCol = selectedCol + 1;
+  // update highlight
+  const rowTiles = tiles[currentRow];
+  if (rowTiles) {
+    rowTiles.forEach(t => t.classList.remove("selected"));
+    rowTiles[selectedCol].classList.add("selected");
+  }
+  return;
+}
+
+if (currentCol >= COLS) return;
+setTile(currentRow, currentCol, key);
+currentCol++;
+}
+
+
+function getTileChar(r, c) {
+  const tile = tiles[r][c];
+  const inner = tile.querySelector(".tile-inner");
+  return (inner.textContent || "").trim();
+}
 
 function setTile(r, c, ch) {
   const tile  = tiles[r][c];
@@ -672,37 +646,6 @@ function setTile(r, c, ch) {
   inner.textContent = ch;
   if (ch) tile.classList.add("tile-filled");
   else tile.classList.remove("tile-filled");
-}
-
-function clearSelectedTile() {
-  const boardElem = document.getElementById("board");
-  if (!boardElem) return;
-  boardElem.querySelectorAll(".tile-selected").forEach(el => el.classList.remove("tile-selected"));
-}
-
-function selectTile(r, c) {
-  if (!FREE_PLACEMENT) return;
-  if (r !== currentRow) return; // sadece aktif satır
-  selectedCol = c;
-  clearSelectedTile();
-  const tile = tiles[r][c];
-  if (tile) tile.classList.add("tile-selected");
-}
-
-function findFirstEmptyColInRow(r) {
-  for (let c = 0; c < COLS; c++) {
-    const ch = tiles[r][c].querySelector(".tile-inner").textContent || "";
-    if (!ch) return c;
-  }
-  return -1;
-}
-
-function findLastFilledColInRow(r) {
-  for (let c = COLS - 1; c >= 0; c--) {
-    const ch = tiles[r][c].querySelector(".tile-inner").textContent || "";
-    if (ch) return c;
-  }
-  return -1;
 }
 
 function getCurrentGuess() {
@@ -789,10 +732,6 @@ if (CURRENT_GAME_TYPE === "solo" || CURRENT_GAME_TYPE === "duel-guess") {
 
   currentRow++;
   currentCol = 0;
-  if (FREE_PLACEMENT) {
-    selectedCol = 0;
-    selectTile(currentRow, 0);
-  }
   setStatus("Yeni bir tahmin yap!");
 }
 
@@ -1487,7 +1426,6 @@ if (btnBackCreator) {
   if (btnSettingsReset) {
     btnSettingsReset.addEventListener("click", () => {
       applyTheme(DEFAULT_THEME);
-      saveFreePlacementToStorage(true);
       loadSettingsIntoUI();
     });
   }
@@ -1517,7 +1455,6 @@ window.addEventListener("load", async () => {
 
   initFirebaseDb();          // 🔥 Firebase Realtime DB'yi başlat
   loadThemeFromStorage();
-  loadFreePlacementFromStorage();
   setupUIEvents();
   bindEndgameModalEvents();
   handleDuelloLinkIfAny();
