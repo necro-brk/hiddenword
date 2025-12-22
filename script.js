@@ -1375,24 +1375,63 @@ window.addEventListener("load", async () => {
   bindEndgameModalEvents();
   handleDuelloLinkIfAny();
 });
-
-// PWA Service Worker register (network-first for HTML; auto-reload on update)
+// PWA Service Worker register
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", async () => {
-    try {
-      const reg = await navigator.serviceWorker.register("/hiddenword/sw.js");
-
-      // When a new SW takes control, reload so the newest HTML/CSS shows immediately.
-      navigator.serviceWorker.addEventListener("controllerchange", () => {
-        window.location.reload();
-      });
-
-      // Ask the browser to check for updates when tab becomes visible.
-      document.addEventListener("visibilitychange", () => {
-        if (document.visibilityState === "visible") reg.update();
-      });
-    } catch (e) {
-      // no-op
-    }
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/hiddenword/sw.js");
   });
 }
+
+/* === HW: Selected cell highlight (no caret) === */
+(() => {
+  const SELECTED_CLASS = "hw-selected";
+
+  // Candidate selectors for grid cells across versions
+  const CELL_SELECTOR = [
+    ".cell",
+    ".tile",
+    ".box",
+    ".letter-box",
+    ".grid-cell",
+    ".guess-cell",
+    "[data-cell]"
+  ].join(",");
+
+  function clearSelected() {
+    document.querySelectorAll("." + SELECTED_CLASS).forEach(el => el.classList.remove(SELECTED_CLASS));
+  }
+
+  function setSelected(el) {
+    if (!el) return;
+    clearSelected();
+    el.classList.add(SELECTED_CLASS);
+
+    // Prevent the browser from treating the cell like a text editor
+    if (el.getAttribute && el.getAttribute("contenteditable") === "true") {
+      el.setAttribute("contenteditable", "false");
+    }
+    // Also avoid focus/caret in case something still focuses it
+    try { el.blur?.(); } catch (_) {}
+  }
+
+  // Event delegation: works even if cells are created dynamically
+  document.addEventListener("click", (e) => {
+    const target = e.target?.closest?.(CELL_SELECTOR);
+    if (!target) return;
+
+    // Only highlight cells that look like grid squares (avoid buttons)
+    const tag = (target.tagName || "").toLowerCase();
+    if (tag === "button" || target.classList.contains("btn") || target.closest("button")) return;
+
+    setSelected(target);
+  });
+
+  // Hide caret even if something is focusable
+  document.addEventListener("focusin", (e) => {
+    const el = e.target?.closest?.(CELL_SELECTOR);
+    if (el) {
+      // If focus lands inside a cell, we just remove focus to kill caret.
+      try { e.target.blur?.(); } catch (_) {}
+    }
+  });
+})();
