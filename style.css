@@ -100,6 +100,21 @@ body {
   margin: 0 0 18px 0;
 }
 
+.home-brand{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:10px;
+  margin-bottom:6px;
+}
+
+.home-logo{
+  width:72px;
+  height:72px;
+  border-radius:18px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+}
+
 .panel-header {
   display: flex;
   align-items: center;
@@ -350,11 +365,6 @@ select {
   font-weight: 700;
   color: #e5e7eb;
   text-transform: uppercase;
-}
-
-.tile-selected{
-  border-color: #38bdf8 !important;
-  box-shadow: 0 0 0 2px rgba(56,189,248,0.25);
 }
 
 .tile-inner {
