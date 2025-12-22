@@ -352,12 +352,6 @@ select {
   text-transform: uppercase;
 }
 
-
-.tile.tile-selected{
-  box-shadow: 0 0 0 2px var(--primary) inset;
-  border-color: var(--primary);
-}
-
 .tile-inner {
   position: absolute;
   inset: 0;
@@ -516,22 +510,6 @@ select {
   margin-top: 10px;
 }
 
-.setting-toggle{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-}
-.setting-toggle label{
-  font-size: 14px;
-  color: var(--text-soft);
-}
-.setting-toggle input[type="checkbox"]{
-  width: 18px;
-  height: 18px;
-  accent-color: var(--primary);
-}
-
 .settings-item label {
   margin-bottom: 4px;
 }
@@ -631,3 +609,7 @@ select {
 .endgame-card{width:min(420px,92vw);background:#0b1220;border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
 .endgame-card h3{margin:0 0 10px 0}
 .endgame-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:14px}
+
+
+/* Free placement: selected cell highlight */
+.tile.selected{outline:2px solid #38bdf8; outline-offset:2px;}
