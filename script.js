@@ -249,50 +249,7 @@ function showScreen(id) {
 }
 
 /* ================== OYUNCU ADI ================== */
-/*
-  İstenen davranış:
-  - Solo/Düello'da isim sormuyoruz.
-  - Grup Yarış moduna girerken (ilk kez) isim soruyoruz.
-  - İsimler Firebase'de GLOBAL olarak tekil: aynı isim 2 kişide olamaz.
-  - Aynı cihaz (clientId) kendi ismini tekrar kullanabilir (reinstall değilse).
-*/
 
-const CLIENT_ID_KEY = "hiddenWordClientId_v1";
-
-function getClientId() {
-  let id = localStorage.getItem(CLIENT_ID_KEY);
-  if (!id) {
-    id = "c_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
-    localStorage.setItem(CLIENT_ID_KEY, id);
-  }
-  return id;
-}
-
-// RTDB key güvenli hale getir (.,#, $,/,[, ] olmasın)
-function nameToDbKey(name) {
-  let n = String(name || "").trim();
-  n = n.replace(/\s+/g, " ");
-  // Türkçe upper
-  n = trUpper(n);
-  // boşlukları underscore yap
-  n = n.replace(/\s+/g, "_");
-  // yasak karakterleri at
-  n = n.replace(/[.#$\[\]\/]/g, "");
-  // çok uzun olmasın
-  if (n.length > 24) n = n.slice(0, 24);
-  // tamamen boş kaldıysa
-  if (!n) n = "İSİMSİZ";
-  return n;
-}
-
-function normalizeDisplayName(name) {
-  let n = String(name || "").trim();
-  n = n.replace(/\s+/g, " ");
-  if (n.length > 16) n = n.slice(0, 16);
-  return n || "İsimsiz";
-}
-
-// Artık burada prompt yok: sadece cache/storage'dan oku
 function getPlayerName() {
   if (playerNameCache) return playerNameCache;
   const stored = localStorage.getItem(NAME_KEY);
@@ -300,104 +257,21 @@ function getPlayerName() {
     playerNameCache = stored;
     return stored;
   }
-  return "İsimsiz";
+  let name = prompt("Kullanıcı adını yaz (leaderboard için):", "") || "İsimsiz";
+  name = name.trim() || "İsimsiz";
+  playerNameCache = name;
+  localStorage.setItem(NAME_KEY, name);
+  return name;
 }
 
-function setPlayerName(name) {
-  const n = normalizeDisplayName(name);
-  playerNameCache = n;
-  localStorage.setItem(NAME_KEY, n);
-}
-
-// usernames/<KEY> -> { name, clientId, createdAt }
-function getUsernameRef(dbKey) {
-  return FIREBASE_DB.ref("usernames/" + dbKey);
-}
-
-// İsim rezerve etme (transaction ile tekil)
-function reserveUsername(desiredName) {
-  return new Promise((resolve) => {
-    const name = normalizeDisplayName(desiredName);
-    const key  = nameToDbKey(name);
-    const clientId = getClientId();
-
-    if (!FIREBASE_DB) {
-      // Offline / Firebase yok: yine de localde tutalım
-      setPlayerName(name);
-      resolve({ ok: true, name });
-      return;
-    }
-
-    const ref = getUsernameRef(key);
-
-    ref.transaction((current) => {
-      if (current === null) {
-        return { name, clientId, createdAt: Date.now() };
-      }
-      // aynı cihaz ise tekrar kabul
-      if (current && current.clientId === clientId) {
-        return current;
-      }
-      // başka biri aldı -> abort
-      return;
-    }, (error, committed, snapshot) => {
-      if (error) {
-        console.warn("Username transaction error:", error);
-        resolve({ ok: false, reason: "error" });
-        return;
-      }
-      if (!committed) {
-        resolve({ ok: false, reason: "taken" });
-        return;
-      }
-      const val = snapshot && snapshot.val ? snapshot.val() : null;
-      setPlayerName((val && val.name) ? val.name : name);
-      resolve({ ok: true, name: getPlayerName() });
-    });
-  });
-}
-
-// Grup moduna girerken çağır: gerekirse prompt açar, tekil isim alır
-async function ensureUniqueUsernameForGroup() {
-  // Önce mevcut isim (varsa) ile dene
-  const current = getPlayerName();
-  if (current && current !== "İsimsiz") {
-    const res = await reserveUsername(current);
-    if (res.ok) return res.name;
-  }
-
-  // İlk kez veya isim alınmışsa kullanıcıdan iste
-  while (true) {
-    const input = prompt("Grup Yarış için kullanıcı adın:", current === "İsimsiz" ? "" : current);
-    const desired = normalizeDisplayName(input || "");
-    const res = await reserveUsername(desired);
-    if (res.ok) return res.name;
-
-    if (res.reason === "taken") {
-      alert("Bu kullanıcı adı alınmış. Lütfen farklı bir kullanıcı adı gir.");
-      continue;
-    }
-
-    // error vb.
-    alert("Kullanıcı adı kaydedilemedi. İnternet/Firebase bağlantını kontrol et.");
-    // kullanıcı isterse tekrar dener
-  }
-}
-
-// Ayarlardan isim değiştir: artık tekillik kontrolü yap
-async function changePlayerName() {
+function changePlayerName() {
   const now = getPlayerName();
-  const input = prompt("Yeni kullanıcı adın:", now) || now;
-  const desired = normalizeDisplayName(input);
-
-  const res = await reserveUsername(desired);
-  if (!res.ok && res.reason === "taken") {
-    alert("Bu kullanıcı adı alınmış. Lütfen farklı bir kullanıcı adı seç.");
-    return;
-  }
+  let name = prompt("Yeni kullanıcı adın:", now) || now;
+  name = name.trim() || "İsimsiz";
+  playerNameCache = name;
+  localStorage.setItem(NAME_KEY, name);
   renderLeaderboard(LEADERBOARD_DATA);
 }
-
 
 /* ================== TEMA / AYARLAR ================== */
 
@@ -1200,25 +1074,21 @@ function joinGroupRoomByCode() {
 
 function startGroupGame() {
   CURRENT_GAME_TYPE = "group";
+  const contextId   = `group:${CURRENT_ROOM}`;
 
-  // Grup moduna girerken isim garanti olsun (tekil)
-  ensureUniqueUsernameForGroup().then(() => {
-    const contextId   = `group:${CURRENT_ROOM}`;
+  const badgeMode = document.getElementById("badge-game-mode");
+  const badgeRoom = document.getElementById("badge-room-info");
+  if (badgeMode) {
+    badgeMode.textContent = `Grup · ${SECRET_WORD.length} harfli`;
+  }
+  if (badgeRoom) {
+    badgeRoom.textContent = `Oda kodu: ${CURRENT_ROOM}`;
+  }
 
-    const badgeMode = document.getElementById("badge-game-mode");
-    const badgeRoom = document.getElementById("badge-room-info");
-    if (badgeMode) {
-      badgeMode.textContent = `Grup · ${SECRET_WORD.length} harfli`;
-    }
-    if (badgeRoom) {
-      badgeRoom.textContent = `Oda kodu: ${CURRENT_ROOM}`;
-    }
-
-    resetGameState(SECRET_WORD, contextId);
-    setLeaderboardVisible(true);
-    loadLeaderboard(contextId);
-    showScreen("screen-game");
-  });
+  resetGameState(SECRET_WORD, contextId);
+  setLeaderboardVisible(true);
+  loadLeaderboard(contextId);
+  showScreen("screen-game");
 }
 
 /* ================== UYGULAMA BAŞLATMA ================== */
@@ -1505,24 +1375,24 @@ window.addEventListener("load", async () => {
   bindEndgameModalEvents();
   handleDuelloLinkIfAny();
 });
-// PWA Service Worker register
+
+// PWA Service Worker register (network-first for HTML; auto-reload on update)
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/hiddenword/sw.js");
+  window.addEventListener("load", async () => {
+    try {
+      const reg = await navigator.serviceWorker.register("/hiddenword/sw.js");
+
+      // When a new SW takes control, reload so the newest HTML/CSS shows immediately.
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        window.location.reload();
+      });
+
+      // Ask the browser to check for updates when tab becomes visible.
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") reg.update();
+      });
+    } catch (e) {
+      // no-op
+    }
   });
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
