@@ -50,8 +50,6 @@ let COLS = 5;
 let tiles        = [];
 let currentRow   = 0;
 let currentCol   = 0;
-let selectedCol  = 0; // serbest yerleştirme için
-let freePlacement = true;
 let finished     = false;
 let keyButtons   = {};
 let keyState     = {};
@@ -251,53 +249,16 @@ function showScreen(id) {
 }
 
 /* ================== OYUNCU ADI ================== */
+/*
+  İstenen davranış:
+  - Solo/Düello'da isim sormuyoruz.
+  - Grup Yarış moduna girerken (ilk kez) isim soruyoruz.
+  - İsimler Firebase'de GLOBAL olarak tekil: aynı isim 2 kişide olamaz.
+  - Aynı cihaz (clientId) kendi ismini tekrar kullanabilir (reinstall değilse).
+*/
 
-function getPlayerName() {
-  // ⚠️ Artık her modda prompt yok.
-  // Sadece kayıtlı isim varsa döndürür; yoksa "İsimsiz" döner.
-  if (playerNameCache) return playerNameCache;
-  const stored = localStorage.getItem(NAME_KEY);
-  if (stored) {
-    playerNameCache = stored;
-    return stored;
-  }
-  return "İsimsiz";
-}
+const CLIENT_ID_KEY = "hiddenWordClientId_v1";
 
-async function changePlayerName() {
-  // Ayarlar ekranından isim değişimi: global tekillik için Firebase'de rezerve etmeyi dener.
-  const now = localStorage.getItem(NAME_KEY) || playerNameCache || "";
-  let name = prompt("Yeni kullanıcı adın:", now) || now;
-  name = (name || "").trim();
-
-  if (!name) {
-    alert("Kullanıcı adı boş olamaz.");
-    return;
-  }
-
-  // Firebase yoksa sadece local'a kaydet
-  if (!FIREBASE_DB) {
-    playerNameCache = name;
-    localStorage.setItem(NAME_KEY, name);
-    renderLeaderboard(LEADERBOARD_DATA);
-    return;
-  }
-
-  const ok = await reserveUniqueUsername(name);
-  if (!ok) {
-    alert("Bu kullanıcı adı alınmış. Lütfen farklı bir isim dene.");
-    return;
-  }
-
-  playerNameCache = name;
-  localStorage.setItem(NAME_KEY, name);
-  renderLeaderboard(LEADERBOARD_DATA);
-}
-
-
-/* ================== CLIENT ID / BENZERSİZ USERNAME ================== */
-
-const CLIENT_ID_KEY = "hw_client_id_v1";
 function getClientId() {
   let id = localStorage.getItem(CLIENT_ID_KEY);
   if (!id) {
@@ -307,209 +268,136 @@ function getClientId() {
   return id;
 }
 
-function normalizeUsernameKey(name) {
-  // RTDB key güvenliği: küçük harf + boşlukları '_' + uygunsuzları at
-  return String(name || "")
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, "_")
-    .replace(/[^a-z0-9_çğıöşü]/g, "");
+// RTDB key güvenli hale getir (.,#, $,/,[, ] olmasın)
+function nameToDbKey(name) {
+  let n = String(name || "").trim();
+  n = n.replace(/\s+/g, " ");
+  // Türkçe upper
+  n = trUpper(n);
+  // boşlukları underscore yap
+  n = n.replace(/\s+/g, "_");
+  // yasak karakterleri at
+  n = n.replace(/[.#$\[\]\/]/g, "");
+  // çok uzun olmasın
+  if (n.length > 24) n = n.slice(0, 24);
+  // tamamen boş kaldıysa
+  if (!n) n = "İSİMSİZ";
+  return n;
 }
 
-async function reserveUniqueUsername(name) {
-  if (!FIREBASE_DB) return true; // offline/dev: allow
-  const clientId = getClientId();
-  const cleanName = (name || "").trim();
-  const key = normalizeUsernameKey(cleanName);
+function normalizeDisplayName(name) {
+  let n = String(name || "").trim();
+  n = n.replace(/\s+/g, " ");
+  if (n.length > 16) n = n.slice(0, 16);
+  return n || "İsimsiz";
+}
 
-  if (!key) return false;
+// Artık burada prompt yok: sadece cache/storage'dan oku
+function getPlayerName() {
+  if (playerNameCache) return playerNameCache;
+  const stored = localStorage.getItem(NAME_KEY);
+  if (stored) {
+    playerNameCache = stored;
+    return stored;
+  }
+  return "İsimsiz";
+}
 
-  const ref = FIREBASE_DB.ref("usernames").child(key);
-  try {
-    const res = await ref.transaction((cur) => {
-      // Boşsa al
-      if (cur === null) {
-        return { name: cleanName, clientId, createdAt: Date.now() };
-      }
-      // Aynı cihaz tekrar kullanıyorsa izin ver
-      if (cur && cur.clientId === clientId) return cur;
-      // Başkası aldıysa abort
+function setPlayerName(name) {
+  const n = normalizeDisplayName(name);
+  playerNameCache = n;
+  localStorage.setItem(NAME_KEY, n);
+}
+
+// usernames/<KEY> -> { name, clientId, createdAt }
+function getUsernameRef(dbKey) {
+  return FIREBASE_DB.ref("usernames/" + dbKey);
+}
+
+// İsim rezerve etme (transaction ile tekil)
+function reserveUsername(desiredName) {
+  return new Promise((resolve) => {
+    const name = normalizeDisplayName(desiredName);
+    const key  = nameToDbKey(name);
+    const clientId = getClientId();
+
+    if (!FIREBASE_DB) {
+      // Offline / Firebase yok: yine de localde tutalım
+      setPlayerName(name);
+      resolve({ ok: true, name });
       return;
-    }, undefined, false);
+    }
 
-    return !!(res && res.committed);
-  } catch (e) {
-    console.warn("Username reserve hata:", e);
-    return false;
-  }
+    const ref = getUsernameRef(key);
+
+    ref.transaction((current) => {
+      if (current === null) {
+        return { name, clientId, createdAt: Date.now() };
+      }
+      // aynı cihaz ise tekrar kabul
+      if (current && current.clientId === clientId) {
+        return current;
+      }
+      // başka biri aldı -> abort
+      return;
+    }, (error, committed, snapshot) => {
+      if (error) {
+        console.warn("Username transaction error:", error);
+        resolve({ ok: false, reason: "error" });
+        return;
+      }
+      if (!committed) {
+        resolve({ ok: false, reason: "taken" });
+        return;
+      }
+      const val = snapshot && snapshot.val ? snapshot.val() : null;
+      setPlayerName((val && val.name) ? val.name : name);
+      resolve({ ok: true, name: getPlayerName() });
+    });
+  });
 }
 
+// Grup moduna girerken çağır: gerekirse prompt açar, tekil isim alır
 async function ensureUniqueUsernameForGroup() {
-  // Grup yarışa girerken otomatik çalışır.
-  let current = localStorage.getItem(NAME_KEY) || playerNameCache || "";
-  current = (current || "").trim();
-
-  // İlk deneme: storage'daki isim varsa rezerve et
-  if (current) {
-    const ok = await reserveUniqueUsername(current);
-    if (ok) {
-      playerNameCache = current;
-      localStorage.setItem(NAME_KEY, current);
-      return current;
-    }
+  // Önce mevcut isim (varsa) ile dene
+  const current = getPlayerName();
+  if (current && current !== "İsimsiz") {
+    const res = await reserveUsername(current);
+    if (res.ok) return res.name;
   }
 
-  // Yoksa / alınmışsa tekrar tekrar iste
+  // İlk kez veya isim alınmışsa kullanıcıdan iste
   while (true) {
-    let name = prompt("Grup yarış için kullanıcı adını gir:", current || "") || "";
-    name = (name || "").trim();
-    if (!name) {
-      alert("Kullanıcı adı boş olamaz.");
+    const input = prompt("Grup Yarış için kullanıcı adın:", current === "İsimsiz" ? "" : current);
+    const desired = normalizeDisplayName(input || "");
+    const res = await reserveUsername(desired);
+    if (res.ok) return res.name;
+
+    if (res.reason === "taken") {
+      alert("Bu kullanıcı adı alınmış. Lütfen farklı bir kullanıcı adı gir.");
       continue;
     }
-    const ok = await reserveUniqueUsername(name);
-    if (!ok) {
-      alert("Bu kullanıcı adı alınmış. Lütfen farklı bir isim seç.");
-      continue;
-    }
-    playerNameCache = name;
-    localStorage.setItem(NAME_KEY, name);
-    return name;
+
+    // error vb.
+    alert("Kullanıcı adı kaydedilemedi. İnternet/Firebase bağlantını kontrol et.");
+    // kullanıcı isterse tekrar dener
   }
 }
 
-/* ================== GRUP ODASI PRESENCE & AUTO CLEANUP ================== */
+// Ayarlardan isim değiştir: artık tekillik kontrolü yap
+async function changePlayerName() {
+  const now = getPlayerName();
+  const input = prompt("Yeni kullanıcı adın:", now) || now;
+  const desired = normalizeDisplayName(input);
 
-let roomPlayersListener = null;
-
-function getRoomBaseRef(roomCode) {
-  return FIREBASE_DB.ref(getRoomPath(roomCode));
-}
-function getPlayersRef(roomCode) {
-  return getRoomBaseRef(roomCode).child("players");
-}
-function getPlayerRef(roomCode, clientId) {
-  return getPlayersRef(roomCode).child(clientId);
-}
-
-function enterRoomPresence(roomCode) {
-  if (!FIREBASE_DB || !roomCode) return;
-  const clientId = getClientId();
-  const name = localStorage.getItem(NAME_KEY) || playerNameCache || "İsimsiz";
-
-  const playerRef = getPlayerRef(roomCode, clientId);
-  playerRef.set({ name, joinedAt: Date.now() }).catch(() => {});
-  playerRef.onDisconnect().remove();
-
-  const playersRef = getPlayersRef(roomCode);
-  if (roomPlayersListener) playersRef.off("value", roomPlayersListener);
-
-  roomPlayersListener = (snap) => {
-    const players = snap.val() || {};
-    const count = Object.keys(players).length;
-
-    if (count === 0) {
-      // Oda boşsa komple sil (race condition OK)
-      getRoomBaseRef(roomCode).remove().catch(() => {});
-    }
-  };
-
-  playersRef.on("value", roomPlayersListener);
-}
-
-function leaveRoomPresence(roomCode) {
-  if (!FIREBASE_DB || !roomCode) return;
-  const clientId = getClientId();
-
-  getPlayerRef(roomCode, clientId).remove().catch(() => {});
-  const playersRef = getPlayersRef(roomCode);
-  if (roomPlayersListener) playersRef.off("value", roomPlayersListener);
-  roomPlayersListener = null;
-}
-
-/* ================== SOLO DEVAM (LOCAL SAVE/RESTORE) ================== */
-
-const SOLO_SAVE_KEY = "hiddenword_solo_save_v1";
-let SOLO_RESTORING = false;
-
-function readTileChar(r, c) {
-  const inner = tiles?.[r]?.[c]?.querySelector(".tile-inner");
-  return (inner?.textContent || "").trim();
-}
-
-function saveSoloProgress() {
-  if (CURRENT_GAME_TYPE !== "solo") return;
-  if (finished) return;
-  if (SOLO_RESTORING) return;
-
-  const grid = [];
-  for (let r = 0; r < ROWS; r++) {
-    const row = [];
-    for (let c = 0; c < COLS; c++) {
-      row.push(readTileChar(r, c));
-    }
-    grid.push(row);
+  const res = await reserveUsername(desired);
+  if (!res.ok && res.reason === "taken") {
+    alert("Bu kullanıcı adı alınmış. Lütfen farklı bir kullanıcı adı seç.");
+    return;
   }
-
-  const payload = {
-    v: 1,
-    savedAt: Date.now(),
-    secretWord: SECRET_WORD,
-    cols: COLS,
-    rows: ROWS,
-    currentRow,
-    selectedCol: (typeof selectedCol === "number" ? selectedCol : 0),
-    grid
-  };
-
-  try {
-    localStorage.setItem(SOLO_SAVE_KEY, JSON.stringify(payload));
-  } catch (e) {
-    console.warn("Solo save başarısız:", e);
-  }
+  renderLeaderboard(LEADERBOARD_DATA);
 }
 
-function clearSoloSave() {
-  try { localStorage.removeItem(SOLO_SAVE_KEY); } catch {}
-}
-
-function tryRestoreSolo() {
-  const raw = localStorage.getItem(SOLO_SAVE_KEY);
-  if (!raw) return false;
-
-  let data;
-  try { data = JSON.parse(raw); } catch { return false; }
-
-  if (!data || !data.secretWord || !Array.isArray(data.grid)) return false;
-
-  // Restore
-  SOLO_RESTORING = true;
-
-  CURRENT_GAME_TYPE = "solo";
-  SECRET_WORD = data.secretWord;
-  CURRENT_MODE = String(data.cols || SECRET_WORD.length || 5);
-
-  const contextId = "solo:resume";
-  resetGameState(SECRET_WORD, contextId);
-  setLeaderboardVisible(false);
-
-  // Grid bas
-  for (let r = 0; r < Math.min(ROWS, data.grid.length); r++) {
-    for (let c = 0; c < Math.min(COLS, data.grid[r].length); c++) {
-      const ch = (data.grid[r][c] || "").trim();
-      if (ch) setTile(r, c, ch, true);
-    }
-  }
-
-  currentRow = Math.min(data.currentRow || 0, ROWS - 1);
-  selectedCol = Math.min((data.selectedCol ?? 0), COLS - 1);
-  updateSelectedTileUI();
-
-  showScreen("screen-game");
-
-  SOLO_RESTORING = false;
-  return true;
-}
 
 /* ================== TEMA / AYARLAR ================== */
 
@@ -675,15 +563,11 @@ function resetGameState(secretWord, contextId) {
       tile.appendChild(inner);
       boardElem.appendChild(tile);
       tiles[r][c] = tile;
-      // Serbest yerleştirme: aktif satırdaki kutuya tıkla seç
-      tile.addEventListener('click', () => selectTileIfAllowed(r, c));
     }
   }
 
   buildKeyboard();
   attachKeydown();
-  selectedCol = 0;
-  updateSelectedTileUI();
   setStatus("Kelimeyi tahmin etmeye başla!", "#e5e7eb");
 }
 
@@ -737,35 +621,7 @@ function createKey(label, value, isSpecial) {
   btn.className = "key" + (isSpecial ? " special" : "");
   btn.textContent = label;
   btn.dataset.value = value;
-
-  // normal tık
   btn.addEventListener("click", () => handleKey(value));
-
-  // BACK basılı tutunca seri silme (tek tık = 1 silme, 250ms sonra repeat)
-  if (value === "BACK") {
-    let t = null;
-    let i = null;
-
-    const stop = () => {
-      if (t) clearTimeout(t);
-      if (i) clearInterval(i);
-      t = null; i = null;
-    };
-
-    btn.addEventListener("pointerdown", (e) => {
-      e.preventDefault();
-      handleKey("BACK");
-      stop();
-      t = setTimeout(() => {
-        i = setInterval(() => handleKey("BACK"), 60);
-      }, 250);
-    });
-
-    ["pointerup","pointercancel","pointerleave"].forEach(ev => {
-      btn.addEventListener(ev, stop);
-    });
-  }
-
   return btn;
 }
 
@@ -808,103 +664,31 @@ function handleKey(key) {
 
   if (finished) return;
 
+
   if (key === "ENTER") {
     submitGuess();
     return;
   }
-
   if (key === "BACK") {
-    // Serbest yerleştirme: seçili kutu doluysa onu sil, boşsa soldaki doluyu bul.
-    if (!freePlacement) {
-      if (currentCol > 0) {
-        currentCol--;
-        setTile(currentRow, currentCol, "");
-      }
-      return;
-    }
-
-    // seçili kolon sınırla
-    if (selectedCol == null) selectedCol = 0;
-    if (selectedCol < 0) selectedCol = 0;
-    if (selectedCol > COLS - 1) selectedCol = COLS - 1;
-
-    // Eğer seçili kutu doluysa direkt sil
-    if (readTileChar(currentRow, selectedCol)) {
-      setTile(currentRow, selectedCol, "");
-      // Silince aynı kolonda kal; eğer boş kaldıysa sola kaydır
-      updateSelectedTileUI();
-      saveSoloProgress();
-      return;
-    }
-
-    // Seçili boşsa: solda dolu bul
-    let c = selectedCol - 1;
-    while (c >= 0 && !readTileChar(currentRow, c)) c--;
-    if (c >= 0) {
-      selectedCol = c;
-      setTile(currentRow, selectedCol, "");
-      updateSelectedTileUI();
-      saveSoloProgress();
-    } else {
-      // satır tamamen boşsa en sola kilitle
-      selectedCol = 0;
-      updateSelectedTileUI();
+    if (currentCol > 0) {
+      currentCol--;
+      setTile(currentRow, currentCol, "");
     }
     return;
   }
 
-  // Harf girişi
-  if (!/^[A-ZÇĞİÖŞÜI]$/.test(key)) return;
-
-  if (!freePlacement) {
-    if (currentCol >= COLS) return;
-    setTile(currentRow, currentCol, key);
-    currentCol++;
-    saveSoloProgress();
-    return;
-  }
-
-  // Serbest yerleştirme: seçili kutuya yaz
-  if (selectedCol == null) selectedCol = 0;
-  if (selectedCol < 0) selectedCol = 0;
-  if (selectedCol > COLS - 1) selectedCol = COLS - 1;
-
-  setTile(currentRow, selectedCol, key);
-  // Yazınca sağa kay
-  if (selectedCol < COLS - 1) selectedCol++;
-  updateSelectedTileUI();
-  saveSoloProgress();
+  if (currentCol >= COLS) return;
+  setTile(currentRow, currentCol, key);
+  currentCol++;
 }
 
-function updateSelectedTileUI() {
-  if (!tiles || !tiles[currentRow]) return;
-  for (let c = 0; c < COLS; c++) {
-    tiles[currentRow][c].classList.remove("tile-selected");
-  }
-  if (freePlacement && tiles[currentRow] && tiles[currentRow][selectedCol]) {
-    tiles[currentRow][selectedCol].classList.add("tile-selected");
-  }
-}
-
-function selectTileIfAllowed(r, c) {
-  // sadece mevcut tahmin satırında seçim izinli
-  if (!freePlacement) return;
-  if (finished) return;
-  if (r !== currentRow) return;
-  selectedCol = Math.max(0, Math.min(COLS - 1, c));
-  updateSelectedTileUI();
-}
-
-function setTile(r, c, ch, skipSave) {
+function setTile(r, c, ch) {
   const tile  = tiles[r][c];
   const inner = tile.querySelector(".tile-inner");
   inner.textContent = ch;
   if (ch) tile.classList.add("tile-filled");
   else tile.classList.remove("tile-filled");
-
-  if (!skipSave) saveSoloProgress();
 }
-
 
 function getCurrentGuess() {
   let guess = "";
@@ -926,14 +710,10 @@ function submitGuess() {
   if (finished) return;
 
   const rawGuess = getCurrentGuess();
-  // Serbest yerleştirme dahil: satır tamamen dolu mu?
-  for (let c = 0; c < COLS; c++) {
-    if (!readTileChar(currentRow, c)) {
-      setStatus(`Kelime eksik. Bu kelime ${COLS} harfli.`, "#f97316");
-      return;
-    }
+  if (rawGuess.length < COLS) {
+    setStatus(`Kelime eksik. Bu kelime ${COLS} harfli.`, "#f97316");
+    return;
   }
-
 
   const upperGuess = trUpper(rawGuess);
 
@@ -974,7 +754,6 @@ function submitGuess() {
 if (CURRENT_GAME_TYPE === "solo" || CURRENT_GAME_TYPE === "duel-guess") {
   const titleEl = document.getElementById("endgame-title");
   if (titleEl) titleEl.textContent = (CURRENT_GAME_TYPE === "duel-guess") ? "Düello bitti! 🎉" : "Tebrikler! 🎉";
-  if (CURRENT_GAME_TYPE === "solo") clearSoloSave();
   openEndgameModal(SECRET_WORD);
 }
     return;
@@ -988,17 +767,13 @@ if (CURRENT_GAME_TYPE === "solo" || CURRENT_GAME_TYPE === "duel-guess") {
     if (CURRENT_GAME_TYPE === "solo" || CURRENT_GAME_TYPE === "duel-guess") {
       const titleEl = document.getElementById("endgame-title");
       if (titleEl) titleEl.textContent = (CURRENT_GAME_TYPE === "duel-guess") ? "Düello bitti" : "Oyun bitti";
-      if (CURRENT_GAME_TYPE === "solo") clearSoloSave();
-  openEndgameModal(SECRET_WORD);
+      openEndgameModal(SECRET_WORD);
     }
     return;
   }
 
   currentRow++;
   currentCol = 0;
-  selectedCol = 0;
-  updateSelectedTileUI();
-  saveSoloProgress();
   setStatus("Yeni bir tahmin yap!");
 }
 
@@ -1077,7 +852,6 @@ function startSoloWithCurrentMode() {
   const word = pickRandomWord(modeValue);
   const contextId = `solo:${modeValue}`;
   CURRENT_GAME_TYPE = "solo";
-  clearSoloSave();
   resetGameState(word, contextId);
   setLeaderboardVisible(false);
   showScreen("screen-game");
@@ -1175,7 +949,6 @@ function startSoloFromCreator() {
   resetGameState(word, contextId);
   setLeaderboardVisible(false);
   showScreen("screen-game");
-  saveSoloProgress();
 }
 
 /* ---- DÜELLO MODU (LINK OLUŞTURMA) ---- */
@@ -1425,32 +1198,28 @@ function joinGroupRoomByCode() {
   });
 }
 
-async function startGroupGame() {
+function startGroupGame() {
   CURRENT_GAME_TYPE = "group";
-  const contextId   = `group:${CURRENT_ROOM}`;
 
-  // ✅ Grup yarışta benzersiz kullanıcı adı garanti
-  await ensureUniqueUsernameForGroup();
+  // Grup moduna girerken isim garanti olsun (tekil)
+  ensureUniqueUsernameForGroup().then(() => {
+    const contextId   = `group:${CURRENT_ROOM}`;
 
-  // ✅ Presence: oyuncu kaydı + oda boşsa sil
-  enterRoomPresence(CURRENT_ROOM);
+    const badgeMode = document.getElementById("badge-game-mode");
+    const badgeRoom = document.getElementById("badge-room-info");
+    if (badgeMode) {
+      badgeMode.textContent = `Grup · ${SECRET_WORD.length} harfli`;
+    }
+    if (badgeRoom) {
+      badgeRoom.textContent = `Oda kodu: ${CURRENT_ROOM}`;
+    }
 
-  const badgeMode = document.getElementById("badge-game-mode");
-  const badgeRoom = document.getElementById("badge-room-info");
-  if (badgeMode) {
-    badgeMode.textContent = `Grup · ${SECRET_WORD.length} harfli`;
-  }
-  if (badgeRoom) {
-    badgeRoom.textContent = `Oda kodu: ${CURRENT_ROOM}`;
-  }
-
-  resetGameState(SECRET_WORD, contextId);
-  setLeaderboardVisible(true);
-  loadLeaderboard(contextId);
-  showScreen("screen-game");
-  saveSoloProgress();
+    resetGameState(SECRET_WORD, contextId);
+    setLeaderboardVisible(true);
+    loadLeaderboard(contextId);
+    showScreen("screen-game");
+  });
 }
-
 
 /* ================== UYGULAMA BAŞLATMA ================== */
 
@@ -1685,17 +1454,10 @@ if (btnBackCreator) {
   if (btnBackGame) {
     btnBackGame.addEventListener("click", () => {
       detachKeydown();
-
-      // Grup yarıştan çıkışta presence temizle
-      if (CURRENT_GAME_TYPE === "group" && CURRENT_ROOM) {
-        leaveRoomPresence(CURRENT_ROOM);
-        CURRENT_ROOM = null;
-      }
-
-      // Solo modda çıkarken kaydı tutuyoruz (devam için), sadece ekran değiştiriyoruz
       showScreen("screen-home");
+    
       setLeaderboardVisible(false);
-    });
+});
   }
 
   /* Settings back & actions */
