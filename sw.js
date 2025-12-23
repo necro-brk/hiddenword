@@ -38,10 +38,10 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(event.request.url);
 
-  // Only handle our own origin
+  // Burada only handle our own origin kısmını ayarlıyorum.
   if (url.origin !== self.location.origin) return;
 
-  // For navigation (HTML documents), go Network First so updates show without hard refresh.
+  // Burada for navigation html documents go network kısmını ayarlıyorum.
   if (event.request.mode === "navigate" || event.request.destination === "document") {
     event.respondWith(
       fetch(event.request)
@@ -55,7 +55,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // For static assets: Stale-While-Revalidate
+  // Burada for static assets stale-while-revalidate kısmını ayarlıyorum.
   event.respondWith(
     caches.match(event.request).then((cached) => {
       const fetchPromise = fetch(event.request)
