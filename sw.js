@@ -1,5 +1,3 @@
-// DEPLOY_CHECK_123
-
 const CACHE_NAME = "hiddenword-v3-20251222200122";
 
 const ASSETS = [
