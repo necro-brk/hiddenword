@@ -505,7 +505,7 @@ body {
 <body>
 <div id="app">
 
-  <!-- ========== ANA EKRAN ========== -->
+  <!-- Burada ana ekran kısmını ayarlıyorum. -->
   <section id="screen-home" class="screen-active">
     <div class="panel">
       <div class="home-brand">
@@ -526,7 +526,7 @@ body {
     </div>
   </section>
 
-  <!-- ========== CREATOR EKRANI (Solo + Düello) ========== -->
+  <!-- Burada solo mod akışını yönetiyorum. -->
   <section id="screen-creator" class="screen-hidden">
     <div class="panel">
       <div class="top-bar">
@@ -552,7 +552,6 @@ body {
         <div class="creator-field">
           <label for="secret-input">Gizli kelime (sadece düello linki için):</label>
           <input id="secret-input" type="text" placeholder="Örn: ARABA" />
-          <div class="small-info">Solo modda bu alan kullanılmaz.</div>
         </div>
         <div style="flex:0 0 auto; display:flex; flex-direction:column; gap:6px;">
           <button id="solo-start-btn" class="gradient small">Solo başlat</button>
@@ -578,7 +577,7 @@ body {
   </section>
 
 
-  <!-- ========== OYUN EKRANI ========== -->
+  <!-- Burada oyun ekrani kısmını ayarlıyorum. -->
   <section id="screen-game" class="screen-hidden">
     <div class="panel">
       <div class="top-bar">
@@ -619,7 +618,7 @@ body {
     </div>
   </section>
 
-  <!-- ========== GRUP MENÜ / CREATE / JOIN (şimdilik basit) ========== -->
+  <!-- Burada oda/grup yarış modu akışını yönetiyorum. -->
   <section id="screen-group-menu" class="screen-hidden">
     <div class="panel">
       <div class="top-bar">
@@ -686,7 +685,7 @@ body {
     </div>
   </section>
 
-  <!-- ========== AYARLAR EKRANI ========== -->
+  <!-- Burada ayarlar ekrani kısmını ayarlıyorum. -->
   <section id="screen-settings" class="screen-hidden">
     <div class="panel">
       <div class="top-bar">
@@ -723,7 +722,7 @@ body {
 
 </div>
 
-  <!-- Firebase SDK (compat sürümü) -->
+  <!-- Burada Firebase tarafındaki veri akışını yönetiyorum. -->
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
@@ -757,10 +756,10 @@ const firebaseConfig = {
 </script>
 
 
-  <!-- Sözlük ve oyun scriptleri -->
+  <!-- Burada sözlük ve oyun scriptleri kısmını ayarlıyorum. -->
   <script src="words_tr.js"></script>
   <script src="script.js"></script>
-<!-- SOLO endgame modal -->
+<!-- Burada oda/grup yarış modu akışını yönetiyorum. -->
 <div id="endgame-modal" class="endgame-modal" aria-hidden="true">
   <div class="endgame-card" role="dialog" aria-modal="true" aria-labelledby="endgame-title">
     <h3 id="endgame-title">Oyun bitti</h3>
@@ -774,7 +773,6 @@ const firebaseConfig = {
 
 </body>
 </html>
-
 
 
 
