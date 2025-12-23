@@ -69,7 +69,63 @@ body {
       margin-bottom: 18px;
     }
 
-    .main-menu-buttons {
+    
+
+/* ===== HOME LOGO (CENTER + PREMIUM) ===== */
+.home-brand{
+  position: relative;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  margin: 2px 0 10px;
+  padding-top: 2px;
+}
+
+.home-logo{
+  width: 140px;
+  height: auto;
+  border-radius: 22px;
+  box-shadow:
+    0 18px 45px rgba(0,0,0,0.45),
+    0 0 0 1px rgba(255,255,255,0.06),
+    0 0 40px rgba(56,189,248,0.18);
+  transform: translateZ(0);
+  animation: homeLogoFloat 3.6s ease-in-out infinite;
+  background: rgba(255,255,255,0.02);
+}
+
+.home-logo-ring{
+  position:absolute;
+  width: calc(140px + 22px);
+  height: calc(140px + 22px);
+  border-radius: 28px;
+  pointer-events:none;
+  background: radial-gradient(circle at 30% 20%, rgba(56,189,248,0.20), transparent 55%),
+              radial-gradient(circle at 70% 80%, rgba(147,51,234,0.22), transparent 60%);
+  filter: blur(10px);
+  opacity: 0.75;
+  animation: homeRingPulse 2.8s ease-in-out infinite;
+}
+
+@keyframes homeLogoFloat{
+  0%,100%{ transform: translateY(0); }
+  50%{ transform: translateY(-6px); }
+}
+
+@keyframes homeRingPulse{
+  0%,100%{ opacity: 0.55; transform: scale(0.98); }
+  50%{ opacity: 0.85; transform: scale(1.03); }
+}
+
+@media (max-width: 520px){
+  .home-logo{ width: 120px; border-radius: 20px; }
+  .home-logo-ring{
+    width: calc(120px + 22px);
+    height: calc(120px + 22px);
+    border-radius: 26px;
+  }
+}
+.main-menu-buttons {
       display: flex;
       flex-direction: column;
       gap: 8px;
@@ -452,11 +508,12 @@ body {
   <!-- ========== ANA EKRAN ========== -->
   <section id="screen-home" class="screen-active">
     <div class="panel">
-      <div class="menu-header center">
-<img src="icons/icon-192.png" class="app-logo" alt="Hidden Word Logo">
-<h1 class="title-main">HIDDEN WORD</h1>
-      
-</div><div class="subtitle">
+      <div class="home-brand">
+        <img class="home-logo" src="icons/icon-512.png" alt="Hidden Word Logo" width="512" height="512" loading="eager" />
+        <div class="home-logo-ring" aria-hidden="true"></div>
+      </div>
+      <h1>HIDDEN WORD</h1>
+      <div class="subtitle">
         Farklı modlarda gizli kelimeyi tahmin et, arkadaşlarınla yarış.
       </div>
 
