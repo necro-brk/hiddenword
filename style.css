@@ -1,4 +1,4 @@
-/* ================== TEMEL TEMA DEĞİŞKENLERİ ================== */
+/* Burada temel tema deği̇şkenleri̇ kısmını ayarlıyorum. */
 :root {
   --bg-body: #050813;
   --bg-panel: #020617;
@@ -29,13 +29,13 @@
   --shadow-panel: 0 18px 45px rgba(15,23,42,0.9);
 }
 
-/* ================== GENEL GÖRÜNÜM ================== */
+/* Burada genel görünüm kısmını ayarlıyorum. */
 
 * {
   box-sizing: border-box;
 }
 html, body {
-  /* Çift dokunma zoom’unu azaltmaya yardımcı olur */
+  /* Burada çift dokunma zoom unu azaltmaya yardımcı kısmını ayarlıyorum. */
   touch-action: manipulation;
 }
 
@@ -63,7 +63,7 @@ body {
   padding: 20px;
 }
 
-/* ================== PANEL / EKRAN ================== */
+/* Burada panel ekran kısmını ayarlıyorum. */
 
 .panel {
   background:
@@ -84,7 +84,7 @@ body {
   display: block;
 }
 
-/* ================== BAŞLIKLAR ================== */
+/* Burada başliklar kısmını ayarlıyorum. */
 
 .title-main {
   margin: 0 0 4px 0;
@@ -113,7 +113,7 @@ body {
   font-size: 18px;
 }
 
-/* ================== BUTONLAR ================== */
+/* Burada butonlar kısmını ayarlıyorum. */
 
 button {
   border: none;
@@ -130,7 +130,7 @@ button:focus {
   outline: none;
 }
 
-/* Ana menü buton grubu */
+/* Burada ana menü buton grubu kısmını ayarlıyorum. */
 .home-buttons {
   display: flex;
   flex-direction: column;
@@ -139,7 +139,7 @@ button:focus {
   margin: 0 auto;
 }
 
-/* Temel stiller */
+/* Burada temel stiller kısmını ayarlıyorum. */
 .btn-primary {
   background: linear-gradient(135deg, var(--primary), var(--primary-soft));
   color: #fff;
@@ -186,7 +186,7 @@ button:active {
   transform: translateY(0);
 }
 
-/* ================== CREATOR / FORM ALANI ================== */
+/* Burada creator form alani kısmını ayarlıyorum. */
 
 .creator-row {
   display: flex;
@@ -239,13 +239,13 @@ select {
   font-size: 13px;
 }
 
-/* ================== GENERATED LINK ================== */
+/* Burada generated link kısmını ayarlıyorum. */
 
 .generated-link-wrap {
   margin-top: 10px;
   font-size: 13px;
   color: #e5e7eb;
-  display: none; /* JS görünür yapacak */
+  display: none; /* Burada js görünür yapacak kısmını ayarlıyorum. */
 }
 
 .generated-link-wrap input {
@@ -254,7 +254,7 @@ select {
   color: #9ca3af;
 }
 
-/* ================== SOLO BLOĞU ================== */
+/* Burada solo mod akışını yönetiyorum. */
 
 .divider {
   margin: 14px 0;
@@ -280,7 +280,7 @@ select {
   margin-top: 2px;
 }
 
-/* ================== BADGE / ETİKETLER ================== */
+/* Burada badge eti̇ketler kısmını ayarlıyorum. */
 
 .badge-row {
   display: flex;
@@ -304,7 +304,7 @@ select {
   color: var(--text-soft);
 }
 
-/* ================== ODA KODU GÖRÜNÜMÜ ================== */
+/* Burada oda/grup yarış modu akışını yönetiyorum. */
 
 .group-room-result {
   margin-top: 12px;
@@ -325,7 +325,7 @@ select {
   margin-bottom: 4px;
 }
 
-/* ================== OYUN BOARD & TILE ================== */
+/* Burada oyun board tile kısmını ayarlıyorum. */
 
 #board {
   margin: 10px auto 16px;
@@ -382,7 +382,7 @@ select {
   color: #6b7280;
 }
 
-/* ================== KLAVYE ================== */
+/* Burada klavye girişlerini yönetiyorum. */
 
 #keyboard {
   max-width: 540px;
@@ -414,16 +414,16 @@ select {
   flex: 1.5 1 46px;
   font-size: 11px;
 }
-/* Geniş enter ve normal backspace */
+/* Burada geri silme davranışını kontrol ediyorum. */
 .key-enter {
-  flex: 5;          /* yaklaşık 5 tuş genişliği */
+  flex: 5;          /* Burada yaklaşık 5 tuş genişliği kısmını ayarlıyorum. */
 }
 
 .key-backspace {
-  flex: 1.4;        /* silme tuşu biraz geniş */
+  flex: 1.4;        /* Burada geri silme davranışını kontrol ediyorum. */
 }
 
-/* Klavye state renkleri (script.js bunları sınıf olarak ekleyecek) */
+/* Burada klavye girişlerini yönetiyorum. */
 .key-correct {
   background: var(--tile-correct);
   color: #f9fafb;
@@ -439,7 +439,7 @@ select {
   color: #6b7280;
 }
 
-/* ================== YARDIM / DURUM METİNLERİ ================== */
+/* Burada yardim durum meti̇nleri̇ kısmını ayarlıyorum. */
 
 .status-text {
   min-height: 22px;
@@ -453,7 +453,7 @@ select {
   color: var(--text-soft);
 }
 
-/* ================== LEADERBOARD ================== */
+/* Burada leaderboard kısmını ayarlıyorum. */
 
 #leaderboard-panel {
   margin-top: 14px;
@@ -501,7 +501,7 @@ select {
   color: #6b7280;
 }
 
-/* ================== AYARLAR EKRANI ================== */
+/* Burada ayarlar ekrani kısmını ayarlıyorum. */
 
 .settings-grid {
   display: grid;
@@ -521,10 +521,10 @@ select {
   margin-top: 14px;
 }
 
-/* ================== RESPONSIVE ================== */
+/* Burada arayüz yerleşimini/uyumluluğunu ayarlıyorum. */
 
 @media (max-width: 600px) {
-  /* Gövdeyi yukarı al, yükseklik zorlamasını kaldır */
+  /* Burada gövdeyi yukarı al yükseklik zorlamasını kaldır kısmını ayarlıyorum. */
   html, body {
     height: auto;
   }
@@ -534,7 +534,7 @@ select {
     padding-top: 8px;
   }
 
-  /* Uygulama kutusu tam ekran kullanıp içeriye yaklaşsın */
+  /* Burada uygulama kutusu tam ekran kullanıp içeriye kısmını ayarlıyorum. */
   #app {
     width: 100%;
     max-width: 100%;
@@ -556,7 +556,7 @@ select {
     align-items: center;
   }
 
-  /* Tahta: biraz küçült, daha az yer kaplasın */
+  /* Burada tahta biraz küçült daha az yer kısmını ayarlıyorum. */
   #board {
     transform: scale(0.9);
     transform-origin: top center;
@@ -564,7 +564,7 @@ select {
     margin-bottom: 8px;
   }
 
-  /* Mobil klavye: daha büyük ve satırı dolduran tuşlar */
+  /* Burada klavye girişlerini yönetiyorum. */
   #keyboard {
     max-width: 100%;
     margin: 6px auto 0;
@@ -595,7 +595,7 @@ select {
     flex: 1.4;
   }
 
-/* Genel hidden sınıfı */
+/* Burada genel hidden sınıfı kısmını ayarlıyorum. */
 .hidden {
   display: none !important;
 }
@@ -603,15 +603,15 @@ select {
 
 
 
-/* SOLO endgame modal */
+/* Burada oda/grup yarış modu akışını yönetiyorum. */
 .endgame-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);z-index:9999;padding:20px}
 .endgame-modal.is-open{display:flex}
 .endgame-card{width:min(420px,92vw);background:#0b1220;border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
 .endgame-card h3{margin:0 0 10px 0}
 .endgame-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:14px}
 
-/* === HW: Selected cell highlight (no caret) === */
-/* Kill the blinking caret in any editable/focusable grid cell */
+/* Burada hw selected cell highlight no caret kısmını ayarlıyorum. */
+/* Burada kill the blinking caret in any kısmını ayarlıyorum. */
 .cell, .tile, .box, .letter-box, .grid-cell, .guess-cell, [data-cell],
 [contenteditable="true"]{
   caret-color: transparent !important;
@@ -619,13 +619,13 @@ select {
   -webkit-user-select: none;
 }
 
-/* If any cell somehow becomes focusable, remove outline */
+/* Burada if any cell somehow becomes focusable kısmını ayarlıyorum. */
 .cell:focus, .tile:focus, .box:focus, .letter-box:focus, .grid-cell:focus, .guess-cell:focus, [data-cell]:focus,
 [contenteditable="true"]:focus{
   outline: none !important;
 }
 
-/* Subtle highlight for currently selected cell */
+/* Burada subtle highlight for currently selected cell kısmını ayarlıyorum. */
 .hw-selected{
   background: rgba(90, 160, 255, 0.14) !important;
   box-shadow: 0 0 0 2px rgba(90, 160, 255, 0.30) !important;
