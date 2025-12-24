@@ -1661,10 +1661,23 @@ document.addEventListener("keydown", (e) => {
 
 // PWA Service Worker register
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/hiddenword/sw.js");
+  window.addEventListener("load", async () => {
+    try {
+      const reg = await navigator.serviceWorker.register("/hiddenword/sw.js");
+      if (reg && reg.update) reg.update();
+
+      let reloaded = false;
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        if (reloaded) return;
+        reloaded = true;
+        window.location.reload();
+      });
+    } catch (e) {
+      console.warn("SW register hata:", e);
+    }
   });
 }
+
 
 
 
