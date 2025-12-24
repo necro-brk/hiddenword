@@ -1590,28 +1590,28 @@ function openHelp(topic) {
   const activeScreen = document.querySelector(".screen-active");
   const screenId = activeScreen ? activeScreen.id : "home-screen";
 
-  const map = {
-    "home-screen": {
-      t: "Menü",
-      b: "Mod seçip oyuna giriyorum. Solo/Düello/Grup Yarış/Ayarlar."
-    },
-    "solo-screen": {
-      t: "Solo Mod",
-      b: "Amaç: gizli kelimeyi tahmin etmek. Kutulara tıklayıp harf girebilirim. Enter gönderir, Backspace siler."
-    },
-    "duel-screen": {
-      t: "Düello",
-      b: "Kod oluşturup arkadaşla paylaşıyorum. Kodla katılınca aynı gizli kelime üzerinden yarışıyoruz."
-    },
-    "group-screen": {
-      t: "Grup Yarış",
-      b: "Oda oluşturup kodu paylaşıyorum. Odaya katılanlar aynı kelimeyle yarışıyor."
-    },
-    "settings-screen": {
-      t: "Ayarlar",
-      b: "Renkleri buradan değiştiriyorum. İstersem varsayılana dönüp kaydediyorum."
-    }
-  };
+const map = {
+  "screen-home": {
+    t: "Solo Mod",
+    b: "İstediğin harf uzunluğunu seç. Gizli kelimeyi sınırlı denemede tahmin etmeye çalış."
+  },
+
+  "screen-duel": {
+    t: "Düello",
+    b: "Bir kelime belirle, oluşan kodu arkadaşınla paylaş. Arkadaşın senin seçtiğin kelimeyi tahmin etmeye çalışsın."
+  },
+
+  "screen-group-menu": {
+    t: "Grup Yarış",
+    b: "Harf uzunluğunu seç, bir oda oluştur. Arkadaşlarınla aynı kelime üzerinden aynı anda yarış."
+  },
+
+  "screen-settings": {
+    t: "Ayarlar",
+    b: "Kullanıcı adını ve tema tercihlerini buradan düzenle."
+  }
+};
+
 
   const info = map[screenId] || { t: "Yardım", b: "Kısaca: mod seç, kelimeyi tahmin et." };
   title.textContent = info.t;
@@ -1648,4 +1648,5 @@ if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/hiddenword/sw.js");
   });
 }
+
 
