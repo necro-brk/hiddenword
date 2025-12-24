@@ -37,7 +37,8 @@ const DEFAULT_THEME = {
 /* ================== GLOBAL STATE ================== */
 
 
-let GAME_ACTIVE = true; // Oyun açık/kapalı durumu (ben)
+/* Ben: window.GAME_ACTIVE globalini tek kez kuruyorum (varsa dokunmuyorum) */
+window.GAME_ACTIVE = (typeof window.GAME_ACTIVE === "undefined") ? true : window.GAME_ACTIVE;
 let CURRENT_SCREEN     = "screen-home";
 let CURRENT_GAME_TYPE  = null;   // "solo", "duel-create", "duel-guess", "group"
 let CURRENT_MODE       = "5";    // string olarak harf sayısı: "3".."8"
@@ -562,7 +563,7 @@ function detachKeydown() {
 
 function handleKey(key) {
 
-  if (!GAME_ACTIVE) {
+  if (!window.GAME_ACTIVE) {
     setStatus("Şu an oyun kapalı.", "#f97316");
     return;
   }
@@ -649,7 +650,7 @@ function getCurrentGuess() {
 
 function submitGuess() {
 
-  if (!GAME_ACTIVE) {
+  if (!window.GAME_ACTIVE) {
     setStatus("Oyun şu an kapalı. Admin açtığında oynayabilirsin.", "#f97316");
     return;
   }
@@ -1170,7 +1171,7 @@ function startGroupGame() {
 function setupUIEvents() {
   // Oyun açık mı kontrolü (ana menü için)
   function guardGameActive() {
-    if (typeof GAME_ACTIVE !== "undefined" && !GAME_ACTIVE) {
+    if (typeof window.GAME_ACTIVE !== "undefined" && !window.GAME_ACTIVE) {
       alert("Şu an oyun kapalı. Admin açtığında tekrar deneyebilirsin.");
       return false;
     }
@@ -1506,6 +1507,8 @@ function startOnboarding(force = false) {
   function positionTooltip(target) {
     const r = target.getBoundingClientRect();
     const pad = 12;
+    const panel = document.querySelector('#screen-home .panel') || document.querySelector('.panel');
+    const pr = panel ? panel.getBoundingClientRect() : null;
 
     // Tooltip ölçüsünü almak için önce resetliyorum
     tooltip.style.left = "0px";
@@ -1515,7 +1518,9 @@ function startOnboarding(force = false) {
     const th = tooltip.offsetHeight || 160;
 
     let left = r.left + (r.width / 2) - (tw / 2);
-    left = Math.max(pad, Math.min(left, window.innerWidth - tw - pad));
+    const minX = pr ? (pr.left + pad) : pad;
+    const maxX = pr ? (pr.right - tw - pad) : (window.innerWidth - tw - pad);
+    left = Math.max(minX, Math.min(left, maxX));
 
     let top = r.bottom + 10;
     if (top + th + pad > window.innerHeight) {
