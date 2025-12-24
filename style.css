@@ -1,4 +1,5 @@
-/* Burada temel tema deği̇şkenleri̇ kısmını ayarlıyorum. */
+/* Hidden Word: Görsel stil dosyası (ben). Panel, ızgara, klavye ve modal stilleri burada. */
+/* ================== TEMEL TEMA DEĞİŞKENLERİ ================== */
 :root {
   --bg-body: #050813;
   --bg-panel: #020617;
@@ -29,13 +30,13 @@
   --shadow-panel: 0 18px 45px rgba(15,23,42,0.9);
 }
 
-/* Burada genel görünüm kısmını ayarlıyorum. */
+/* ================== GENEL GÖRÜNÜM ================== */
 
 * {
   box-sizing: border-box;
 }
 html, body {
-  /* Burada çift dokunma zoom unu azaltmaya yardımcı kısmını ayarlıyorum. */
+  /* Çift dokunma zoom’unu azaltmaya yardımcı olur */
   touch-action: manipulation;
 }
 
@@ -63,7 +64,7 @@ body {
   padding: 20px;
 }
 
-/* Burada panel ekran kısmını ayarlıyorum. */
+/* ================== PANEL / EKRAN ================== */
 
 .panel {
   background:
@@ -84,7 +85,7 @@ body {
   display: block;
 }
 
-/* Burada başliklar kısmını ayarlıyorum. */
+/* ================== BAŞLIKLAR ================== */
 
 .title-main {
   margin: 0 0 4px 0;
@@ -113,7 +114,7 @@ body {
   font-size: 18px;
 }
 
-/* Burada butonlar kısmını ayarlıyorum. */
+/* ================== BUTONLAR ================== */
 
 button {
   border: none;
@@ -130,7 +131,7 @@ button:focus {
   outline: none;
 }
 
-/* Burada ana menü buton grubu kısmını ayarlıyorum. */
+/* Ana menü buton grubu */
 .home-buttons {
   display: flex;
   flex-direction: column;
@@ -139,7 +140,7 @@ button:focus {
   margin: 0 auto;
 }
 
-/* Burada temel stiller kısmını ayarlıyorum. */
+/* Temel stiller */
 .btn-primary {
   background: linear-gradient(135deg, var(--primary), var(--primary-soft));
   color: #fff;
@@ -186,7 +187,7 @@ button:active {
   transform: translateY(0);
 }
 
-/* Burada creator form alani kısmını ayarlıyorum. */
+/* ================== CREATOR / FORM ALANI ================== */
 
 .creator-row {
   display: flex;
@@ -239,13 +240,13 @@ select {
   font-size: 13px;
 }
 
-/* Burada generated link kısmını ayarlıyorum. */
+/* ================== GENERATED LINK ================== */
 
 .generated-link-wrap {
   margin-top: 10px;
   font-size: 13px;
   color: #e5e7eb;
-  display: none; /* Burada js görünür yapacak kısmını ayarlıyorum. */
+  display: none; /* JS görünür yapacak */
 }
 
 .generated-link-wrap input {
@@ -254,7 +255,7 @@ select {
   color: #9ca3af;
 }
 
-/* Burada solo mod akışını yönetiyorum. */
+/* ================== SOLO BLOĞU ================== */
 
 .divider {
   margin: 14px 0;
@@ -280,7 +281,7 @@ select {
   margin-top: 2px;
 }
 
-/* Burada badge eti̇ketler kısmını ayarlıyorum. */
+/* ================== BADGE / ETİKETLER ================== */
 
 .badge-row {
   display: flex;
@@ -304,7 +305,7 @@ select {
   color: var(--text-soft);
 }
 
-/* Burada oda/grup yarış modu akışını yönetiyorum. */
+/* ================== ODA KODU GÖRÜNÜMÜ ================== */
 
 .group-room-result {
   margin-top: 12px;
@@ -325,7 +326,7 @@ select {
   margin-bottom: 4px;
 }
 
-/* Burada oyun board tile kısmını ayarlıyorum. */
+/* ================== OYUN BOARD & TILE ================== */
 
 #board {
   margin: 10px auto 16px;
@@ -382,7 +383,7 @@ select {
   color: #6b7280;
 }
 
-/* Burada klavye girişlerini yönetiyorum. */
+/* ================== KLAVYE ================== */
 
 #keyboard {
   max-width: 540px;
@@ -414,16 +415,16 @@ select {
   flex: 1.5 1 46px;
   font-size: 11px;
 }
-/* Burada geri silme davranışını kontrol ediyorum. */
+/* Geniş enter ve normal backspace */
 .key-enter {
-  flex: 5;          /* Burada yaklaşık 5 tuş genişliği kısmını ayarlıyorum. */
+  flex: 5;          /* yaklaşık 5 tuş genişliği */
 }
 
 .key-backspace {
-  flex: 1.4;        /* Burada geri silme davranışını kontrol ediyorum. */
+  flex: 1.4;        /* silme tuşu biraz geniş */
 }
 
-/* Burada klavye girişlerini yönetiyorum. */
+/* Klavye state renkleri (script.js bunları sınıf olarak ekleyecek) */
 .key-correct {
   background: var(--tile-correct);
   color: #f9fafb;
@@ -439,7 +440,7 @@ select {
   color: #6b7280;
 }
 
-/* Burada yardim durum meti̇nleri̇ kısmını ayarlıyorum. */
+/* ================== YARDIM / DURUM METİNLERİ ================== */
 
 .status-text {
   min-height: 22px;
@@ -453,7 +454,7 @@ select {
   color: var(--text-soft);
 }
 
-/* Burada leaderboard kısmını ayarlıyorum. */
+/* ================== LEADERBOARD ================== */
 
 #leaderboard-panel {
   margin-top: 14px;
@@ -501,7 +502,7 @@ select {
   color: #6b7280;
 }
 
-/* Burada ayarlar ekrani kısmını ayarlıyorum. */
+/* ================== AYARLAR EKRANI ================== */
 
 .settings-grid {
   display: grid;
@@ -521,10 +522,10 @@ select {
   margin-top: 14px;
 }
 
-/* Burada arayüz yerleşimini/uyumluluğunu ayarlıyorum. */
+/* ================== RESPONSIVE ================== */
 
 @media (max-width: 600px) {
-  /* Burada gövdeyi yukarı al yükseklik zorlamasını kaldır kısmını ayarlıyorum. */
+  /* Gövdeyi yukarı al, yükseklik zorlamasını kaldır */
   html, body {
     height: auto;
   }
@@ -534,7 +535,7 @@ select {
     padding-top: 8px;
   }
 
-  /* Burada uygulama kutusu tam ekran kullanıp içeriye kısmını ayarlıyorum. */
+  /* Uygulama kutusu tam ekran kullanıp içeriye yaklaşsın */
   #app {
     width: 100%;
     max-width: 100%;
@@ -556,7 +557,7 @@ select {
     align-items: center;
   }
 
-  /* Burada tahta biraz küçült daha az yer kısmını ayarlıyorum. */
+  /* Tahta: biraz küçült, daha az yer kaplasın */
   #board {
     transform: scale(0.9);
     transform-origin: top center;
@@ -564,7 +565,7 @@ select {
     margin-bottom: 8px;
   }
 
-  /* Burada klavye girişlerini yönetiyorum. */
+  /* Mobil klavye: daha büyük ve satırı dolduran tuşlar */
   #keyboard {
     max-width: 100%;
     margin: 6px auto 0;
@@ -595,7 +596,7 @@ select {
     flex: 1.4;
   }
 
-/* Burada genel hidden sınıfı kısmını ayarlıyorum. */
+/* Genel hidden sınıfı */
 .hidden {
   display: none !important;
 }
@@ -603,15 +604,15 @@ select {
 
 
 
-/* Burada oda/grup yarış modu akışını yönetiyorum. */
+/* SOLO endgame modal */
 .endgame-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);z-index:9999;padding:20px}
 .endgame-modal.is-open{display:flex}
 .endgame-card{width:min(420px,92vw);background:#0b1220;border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
 .endgame-card h3{margin:0 0 10px 0}
 .endgame-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:14px}
 
-/* Burada hw selected cell highlight no caret kısmını ayarlıyorum. */
-/* Burada kill the blinking caret in any kısmını ayarlıyorum. */
+/* === HW: Selected cell highlight (no caret) === */
+/* Kill the blinking caret in any editable/focusable grid cell */
 .cell, .tile, .box, .letter-box, .grid-cell, .guess-cell, [data-cell],
 [contenteditable="true"]{
   caret-color: transparent !important;
@@ -619,15 +620,73 @@ select {
   -webkit-user-select: none;
 }
 
-/* Burada if any cell somehow becomes focusable kısmını ayarlıyorum. */
+/* If any cell somehow becomes focusable, remove outline */
 .cell:focus, .tile:focus, .box:focus, .letter-box:focus, .grid-cell:focus, .guess-cell:focus, [data-cell]:focus,
 [contenteditable="true"]:focus{
   outline: none !important;
 }
 
-/* Burada subtle highlight for currently selected cell kısmını ayarlıyorum. */
+/* Subtle highlight for currently selected cell */
 .hw-selected{
   background: rgba(90, 160, 255, 0.14) !important;
   box-shadow: 0 0 0 2px rgba(90, 160, 255, 0.30) !important;
   transition: background 0.12s ease, box-shadow 0.12s ease;
+}
+
+
+/* Yardım penceresi */
+.help-btn{
+  margin-left: 10px;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(0,0,0,0.25);
+  color: rgba(255,255,255,0.9);
+  font-weight: 700;
+  cursor: pointer;
+}
+.help-btn:hover{ background: rgba(0,0,0,0.35); }
+
+.modal.hidden{ display:none; }
+.modal{ position: fixed; inset: 0; z-index: 9999; }
+.modal-backdrop{ position:absolute; inset:0; background: rgba(0,0,0,0.55); }
+.modal-card{
+  position: relative;
+  width: min(720px, calc(100% - 32px));
+  margin: 9vh auto 0;
+  background: rgba(16,20,32,0.96);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 18px;
+  box-shadow: 0 25px 80px rgba(0,0,0,0.6);
+  padding: 14px 16px 16px;
+}
+.modal-head{ display:flex; align-items:center; justify-content:space-between; gap: 12px; }
+.modal-title{ font-size: 16px; font-weight: 700; }
+.modal-close{
+  width: 36px; height: 36px; border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(0,0,0,0.25);
+  color: rgba(255,255,255,0.9);
+  cursor: pointer;
+}
+.modal-body{ color: rgba(255,255,255,0.86); line-height: 1.5; font-size: 14px; }
+
+
+
+/* Seçili kutu vurgusu (caret yok) */
+.tile.tile-selected {
+  border-color: rgba(255,255,255,0.65);
+  box-shadow: 0 0 0 2px rgba(90,155,255,0.18);
+  background: rgba(90,155,255,0.08);
+}
+.tile:focus { outline: none; }
+
+
+/* Küçük ekranlarda taşma olmasın */
+@media (max-width: 700px) {
+  .game-panel { width: calc(100% - 24px); padding: 18px; }
+  .keyboard { width: 100%; }
+  .keyboard .kb-row { gap: 6px; }
+  .keyboard .kb-key { min-width: 30px; padding: 10px 8px; font-size: 13px; }
 }
