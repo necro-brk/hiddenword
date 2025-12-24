@@ -1479,12 +1479,29 @@ function startOnboarding(force = false) {
 
   if (!overlay || !tooltip || !titleEl || !bodyEl || !btnNext || !btnSkip) return;
 
-  const steps = [
-    { sel: "#btn-home-solo",     t: "Solo Mod",   b: "Tek başıma oynuyorum. Kutulara tıklayıp harf yazıyorum, Enter ile gönderiyorum." },
-    { sel: "#btn-home-duel",     t: "Düello",     b: "Arkadaşımla kapışıyorum. Kod oluşturup paylaşıyorum veya kod ile odaya giriyorum." },
-    { sel: "#btn-home-group",    t: "Grup Yarış", b: "Oda kurup birden fazla kişiyle aynı anda yarışıyorum." },
-    { sel: "#btn-home-settings", t: "Ayarlar",    b: "Kullanıcı adımı ve tema ayarlarını yönetiyorum." }
-  ];
+const steps = [
+  {
+    sel: "#btn-home-solo",
+    t: "Solo Mod",
+    b: "Harf uzunluğunu seç. Gizli kelimeyi sınırlı denemede tahmin etmeye çalış."
+  },
+  {
+    sel: "#btn-home-duel",
+    t: "Düello",
+    b: "Bir kelime belirle, oluşan kodu arkadaşınla paylaş. Arkadaşın senin seçtiğin kelimeyi tahmin etmeye çalışsın."
+  },
+  {
+    sel: "#btn-home-group",
+    t: "Grup Yarış",
+    b: "Harf uzunluğunu seç, bir oda oluştur. Arkadaşlarınla aynı kelime üzerinden aynı anda yarış."
+  },
+  {
+    sel: "#btn-home-settings",
+    t: "Ayarlar",
+    b: "Kullanıcı adını ve tema tercihlerini buradan düzenle."
+  }
+];
+
 
   let stepIndex = 0;
   let currentTarget = null;
@@ -1648,5 +1665,6 @@ if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/hiddenword/sw.js");
   });
 }
+
 
 
