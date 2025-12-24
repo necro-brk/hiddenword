@@ -721,7 +721,6 @@ if (CURRENT_GAME_TYPE === "solo" || CURRENT_GAME_TYPE === "duel-guess") {
 
   currentRow++;
   currentCol = 0;
-  renderActiveCell(); // Ben: yeni satıra geçince seçimi ilk kutuya alıyorum
   setStatus("Yeni bir tahmin yap!");
 }
 
@@ -1474,6 +1473,16 @@ function startOnboarding(force = false) {
   const overlay = document.getElementById("tour-overlay");
   const tooltip = document.getElementById("tour-tooltip");
   const titleEl = document.getElementById("tour-title");
+  // Ben: tooltip konumu viewport'a göre hesaplanıyor; container'a bağlı kalmaması için fixed yapıyorum
+  if (tooltip) {
+    tooltip.style.position = "fixed";
+    tooltip.style.zIndex = "100000";
+  }
+  if (overlay) {
+    overlay.style.position = "fixed";
+    overlay.style.inset = "0";
+    overlay.style.zIndex = "99999";
+  }
   const bodyEl  = document.getElementById("tour-body");
   const btnNext = document.getElementById("tour-next");
   const btnSkip = document.getElementById("tour-skip");
