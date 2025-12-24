@@ -67,7 +67,6 @@ body {
 /* ================== PANEL / EKRAN ================== */
 
 .panel {
-  position: relative;
   background:
     radial-gradient(circle at top, rgba(56,189,248,0.08), transparent 60%),
     radial-gradient(circle at bottom, rgba(147,51,234,0.12), transparent 60%),
@@ -387,7 +386,6 @@ select {
 /* ================== KLAVYE ================== */
 
 #keyboard {
-  display: block;
   max-width: 540px;
   margin: 0 auto;
   user-select: none;
@@ -678,9 +676,12 @@ select {
 
 /* Seçili kutu vurgusu (caret yok) */
 .tile.tile-selected {
+  /* Ben: seçili kutu rengi bastırmasın; sadece çerçeve/parıltı gösteriyorum */
   border-color: rgba(255,255,255,0.65);
-  box-shadow: 0 0 0 2px rgba(90,155,255,0.18);
-  background: rgba(90,155,255,0.08);
+  box-shadow:
+    0 0 0 2px rgba(59,130,246,0.95),
+    0 0 14px rgba(59,130,246,0.35);
+  /* background kaldırıldı: tile-correct / tile-present / tile-absent renkleri görünür kalsın */
 }
 .tile:focus { outline: none; }
 
@@ -691,88 +692,4 @@ select {
   .keyboard { width: 100%; }
   .keyboard .kb-row { gap: 6px; }
   .keyboard .kb-key { min-width: 30px; padding: 10px 8px; font-size: 13px; }
-}
-
-
-/* ================== YARDIM / TUR (ben) ================== */
-
-.help-fab{
-  position:absolute;
-  right: 16px;
-  bottom: 16px;
-  width: 34px;
-  height: 34px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.18);
-  background: rgba(2,6,23,0.72);
-  color: #e5e7eb;
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.help-fab:active{ transform: translateY(1px); }
-
-.tour-overlay{
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.55);
-  z-index: 10000;
-  display: none;
-}
-
-.tour-overlay.active{ display:block; }
-
-.tour-tooltip{
-  position: absolute;
-  max-width: 320px;
-  background: #020617;
-  border: 1px solid #1f2937;
-  border-radius: 14px;
-  padding: 12px;
-  box-shadow: 0 18px 45px rgba(0,0,0,0.55);
-  z-index: 10010;
-}
-
-.tour-head{
-  display:flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 8px;
-}
-
-.tour-title{ font-weight: 800; letter-spacing: .5px; }
-.tour-body{ font-size: 14px; line-height: 1.35; color: #e5e7eb; }
-
-.tour-skip{
-  width: 28px;
-  height: 28px;
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.14);
-  background: transparent;
-  color: #e5e7eb;
-  cursor: pointer;
-}
-
-.tour-actions{
-  display:flex;
-  justify-content:flex-end;
-  margin-top: 10px;
-}
-
-.tour-next{
-  padding: 8px 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.14);
-  background: #1d4ed8;
-  color: white;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.tour-highlight{
-  position: relative;
-  z-index: 10020 !important;
-  box-shadow: 0 0 0 3px rgba(59,130,246,0.75), 0 12px 26px rgba(0,0,0,0.45);
-  border-radius: 14px;
 }
