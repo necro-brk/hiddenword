@@ -1,4 +1,16 @@
 /* Hidden Word: Oyun mantığı (ben). Mod geçişleri, input, Firebase ve UI kontrolü burada. */
+
+let GAME_ACTIVE = true; // Ben: oyun açık/kapalı durumunu buradan yönetiyorum
+
+function updateVh() {
+  // Ben: mobil tarayıcı adres çubuğu oynadıkça yükseklik sapmasını azaltıyorum
+  const vh = window.innerHeight * 0.01;
+  document.documentElement.style.setProperty("--vh", `${vh}px`);
+}
+window.addEventListener("resize", updateVh);
+window.addEventListener("orientationchange", updateVh);
+updateVh();
+
 /**************************************************
  * Hidden Word – Çok modlu kelime oyunu
  * Bu dosyayı script.js olarak kaydet.
@@ -510,21 +522,48 @@ function attachKeydown() {
   if (keydownHandler) {
     window.removeEventListener("keydown", keydownHandler);
   }
+
   keydownHandler = (e) => {
     if (finished) return;
+
+    // Ben: input/textarea içindeyken global klavyeye dokunmuyorum
+    const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+    if (tag === "input" || tag === "textarea" || tag === "select") return;
+
+    // Ben: fiziksel klavye sadece oyun ekranında çalışıyor
+    if (CURRENT_SCREEN !== "screen-game") return;
+
+    // Ben: Ctrl/Alt/Meta basılıyken oyuna harf düşmesin + kısayolları engelliyorum
+    if (e.ctrlKey || e.altKey || e.metaKey) {
+      e.preventDefault();
+      return;
+    }
+
     const key = e.key;
+
     if (key === "Enter") {
+      e.preventDefault();
       handleKey("ENTER");
-    } else if (key === "Backspace") {
+      return;
+    }
+
+    if (key === "Backspace") {
+      e.preventDefault();
       handleKey("BACK");
-    } else {
-      const ch = trUpperChar(key);
-      if (/^[A-ZÇĞİÖŞÜI]$/.test(ch)) {
-        handleKey(ch);
-      }
+      return;
+    }
+
+    // Tek karakter değilse (Shift, Tab, Arrow vb.) yok sayıyorum
+    if (!key || key.length !== 1) return;
+
+    const ch = trUpperChar(key);
+    if (/^[A-ZÇĞİÖŞÜI]$/.test(ch)) {
+      e.preventDefault();
+      handleKey(ch);
     }
   };
-  window.addEventListener("keydown", keydownHandler);
+
+  window.addEventListener("keydown", keydownHandler, { passive: false });
 }
 
 function detachKeydown() {
@@ -1488,10 +1527,24 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") closeHelp();
 });
 
-// PWA Service Worker register
+// PWA Service Worker register (ben)
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/hiddenword/sw.js");
+  window.addEventListener("load", async () => {
+    try {
+      const reg = await navigator.serviceWorker.register("/hiddenword/sw.js");
+
+      // Ben: yeni sürüm varsa hızlıca update tetikliyorum
+      if (reg && reg.update) reg.update();
+
+      // Ben: controller değişince (yeni SW aktif olunca) bir kere reload ediyorum
+      let reloaded = false;
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        if (reloaded) return;
+        reloaded = true;
+        window.location.reload();
+      });
+    } catch (e) {
+      console.warn("SW register hata:", e);
+    }
   });
 }
-
