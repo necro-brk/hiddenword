@@ -1,3 +1,7 @@
+/* Hidden Word - Service Worker
+   Ben burada PWA cache yönetimini yapıyorum.
+   Yeni sürüm geldiğinde eski cache'i temizleyip sayfayı güncelliyorum.
+*/
 const CACHE_NAME = "hiddenword-v3-20251222200122";
 
 const ASSETS = [
@@ -38,10 +42,10 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(event.request.url);
 
-  // Burada only handle our own origin kısmını ayarlıyorum.
+  // Only handle our own origin
   if (url.origin !== self.location.origin) return;
 
-  // Burada for navigation html documents go network kısmını ayarlıyorum.
+  // For navigation (HTML documents), go Network First so updates show without hard refresh.
   if (event.request.mode === "navigate" || event.request.destination === "document") {
     event.respondWith(
       fetch(event.request)
@@ -55,7 +59,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Burada for static assets stale-while-revalidate kısmını ayarlıyorum.
+  // For static assets: Stale-While-Revalidate
   event.respondWith(
     caches.match(event.request).then((cached) => {
       const fetchPromise = fetch(event.request)
