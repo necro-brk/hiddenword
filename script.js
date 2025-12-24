@@ -721,6 +721,7 @@ if (CURRENT_GAME_TYPE === "solo" || CURRENT_GAME_TYPE === "duel-guess") {
 
   currentRow++;
   currentCol = 0;
+  renderActiveCell(); // Ben: yeni satıra geçince seçimi ilk kutuya alıyorum
   setStatus("Yeni bir tahmin yap!");
 }
 
