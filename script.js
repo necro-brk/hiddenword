@@ -1,6 +1,10 @@
-/* Burada hidden word çok modlu kelime oyunu kısmını ayarlıyorum. */
+/* Hidden Word: Oyun mantığı (ben). Mod geçişleri, input, Firebase ve UI kontrolü burada. */
+/**************************************************
+ * Hidden Word – Çok modlu kelime oyunu
+ * Bu dosyayı script.js olarak kaydet.
+ **************************************************/
 
-/* Burada mobile viewport fix 100vh kısmını ayarlıyorum. */
+/* ================== MOBILE VIEWPORT FIX (100vh) ================== */
 (function setVhVar(){
   const set = () => {
     const vh = window.innerHeight * 0.01;
@@ -15,7 +19,7 @@
 
 
 
-/* Burada global konstantlar kısmını ayarlıyorum. */
+/* ================== GLOBAL KONSTANTLAR ================== */
 const DEBUG = false;
 const dlog = (...args) => { if (DEBUG) console.log(...args); };
 
@@ -30,14 +34,14 @@ const DEFAULT_THEME = {
   tileAbsent:    "#111827",
 };
 
-/* Burada global state kısmını ayarlıyorum. */
+/* ================== GLOBAL STATE ================== */
 
 let CURRENT_SCREEN     = "screen-home";
-let CURRENT_GAME_TYPE  = null;   // Burada düello modu akışını yönetiyorum.
-let CURRENT_MODE       = "5";    // Burada string olarak harf sayısı 3 8 kısmını ayarlıyorum.
-let CURRENT_ROOM       = null;   // Burada oda/grup yarış modu akışını yönetiyorum.
-let CURRENT_CONTEXT_ID = "default"; // Burada leaderboard context kısmını ayarlıyorum.
-let FIREBASE_DB        = null;   // Burada Firebase tarafındaki veri akışını yönetiyorum.
+let CURRENT_GAME_TYPE  = null;   // "solo", "duel-create", "duel-guess", "group"
+let CURRENT_MODE       = "5";    // string olarak harf sayısı: "3".."8"
+let CURRENT_ROOM       = null;   // Grup modu oda kodu
+let CURRENT_CONTEXT_ID = "default"; // Leaderboard context
+let FIREBASE_DB        = null;   // 🔥 Realtime Database referansı
 
 let SECRET_WORD = "";
 
@@ -58,7 +62,7 @@ let LEADERBOARD_DATA = [];
 
 let playerNameCache = "";
 
-/* Burada Firebase tarafındaki veri akışını yönetiyorum. */
+/* ================== FIREBASE YARDIMCI FONKSİYONLAR ================== */
 
 function initFirebaseDb() {
   try {
@@ -119,7 +123,7 @@ function getDuelPath(code) {
   return "duels/" + code;
 }
 
-/* Burada türkçe büyük harf dönüştürme kısmını ayarlıyorum. */
+/* ================== TÜRKÇE BÜYÜK HARF DÖNÜŞTÜRME ================== */
 
 function trUpper(str) {
   return str
@@ -135,7 +139,7 @@ function trUpperChar(ch) {
   return trUpper(ch).charAt(0);
 }
 
-/* Burada keli̇me sözlüğü kısmını ayarlıyorum. */
+/* ================== KELİME SÖZLÜĞÜ ================== */
 
 function ensureWordSet() {
   if (WORD_SET) return;
@@ -160,33 +164,36 @@ function ensureWordSet() {
   WORD_SET = new Set();
 }
 
-/* Burada modevalue 3 4 5 6 7 kısmını ayarlıyorum. */
+/**
+ * modeValue: "3","4","5","6","7","8" gibi string
+ * O harf sayısına göre rastgele kelime döndürür.
+ */
 function pickRandomWord(modeValue) {
   ensureWordSet();
   const all = Array.from(WORD_SET);
   if (!all.length) return "HATA";
 
-  const targetLen = parseInt(modeValue, 10); // Burada 3 8 gibi kısmını ayarlıyorum.
+  const targetLen = parseInt(modeValue, 10); // 3..8 gibi
   let candidates = all;
 
-  // Burada önce sözlükte gerçekten bu uzunlukta olan kısmını ayarlıyorum.
+  // Önce sözlükte gerçekten bu uzunlukta olan kelimeleri bulmaya çalış
   if (!Number.isNaN(targetLen)) {
     candidates = all.filter(w => w.length === targetLen);
   }
 
-  // Burada hiç yoksa tüm sözlükten seçeceğiz ama kısmını ayarlıyorum.
+  // Hiç yoksa tüm sözlükten seçeceğiz ama yine de uzunluğu zorlayacağız
   if (!candidates.length) {
     console.warn("Bu uzunlukta kelime bulunamadı, tüm sözlükten seçiliyor:", targetLen);
     candidates = all;
   }
 
-  // Burada rastgele bir kelime seç kısmını ayarlıyorum.
+  // Rastgele bir kelime seç
   let word = candidates[Math.floor(Math.random() * candidates.length)] || "HATA";
 
-  // Burada türkçe upper gereksiz karakter temizliği kısmını ayarlıyorum.
+  // Türkçe upper + gereksiz karakter temizliği
   word = trUpper(word).replace(/[^A-ZÇĞİÖŞÜI]/g, "");
 
-  // Burada oda/grup yarış modu akışını yönetiyorum.
+  // Seçilen moda göre uzunluğu ZORUNLU yap
   if (!Number.isNaN(targetLen)) {
     if (word.length > targetLen) {
       word = word.slice(0, targetLen);
@@ -201,7 +208,7 @@ function pickRandomWord(modeValue) {
   return word;
 }
 
-/* Burada url param encode-decode kısmını ayarlıyorum. */
+/* ================== URL PARAM / ENCODE-DECODE ================== */
 
 function getQueryParam(name) {
   const params = new URLSearchParams(window.location.search);
@@ -226,7 +233,7 @@ function decodeSecret(code) {
     .join("");
 }
 
-/* Burada ekran geçi̇şleri̇ kısmını ayarlıyorum. */
+/* ================== EKRAN GEÇİŞLERİ ================== */
 
 function showScreen(id) {
   const prev = document.getElementById(CURRENT_SCREEN);
@@ -242,7 +249,7 @@ function showScreen(id) {
   CURRENT_SCREEN = id;
 }
 
-/* Burada oyuncu adi kısmını ayarlıyorum. */
+/* ================== OYUNCU ADI ================== */
 
 function getPlayerName() {
   if (playerNameCache) return playerNameCache;
@@ -267,7 +274,7 @@ function changePlayerName() {
   renderLeaderboard(LEADERBOARD_DATA);
 }
 
-/* Burada tema ayarlar kısmını ayarlıyorum. */
+/* ================== TEMA / AYARLAR ================== */
 
 function applyTheme(theme) {
   CURRENT_THEME = { ...DEFAULT_THEME, ...theme };
@@ -325,14 +332,14 @@ function saveSettingsFromUI() {
   applyTheme(theme);
 }
 
-/* Burada leaderboard local online kısmını ayarlıyorum. */
+/* ================== LEADERBOARD (LOCAL + ONLINE) ================== */
 
 function getLBKey(contextId) {
   return LB_PREFIX + (contextId || "default");
 }
 
 function loadLeaderboard(contextId) {
-  // Burada oda/grup yarış modu akışını yönetiyorum.
+  // 🔒 Sadece grup modunda leaderboard aktif
   if (CURRENT_GAME_TYPE !== "group") return;
   const key = getLBKey(contextId);
   let arr = [];
@@ -343,7 +350,7 @@ function loadLeaderboard(contextId) {
     console.warn("Leaderboard okunamadı:", e);
   }
 
-  // Burada Service Worker cache stratejisini yönetiyorum.
+  // Önce local'dekini göster (offline destek)
   arr.sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score;
     return (a.ts || 0) - (b.ts || 0);
@@ -351,7 +358,7 @@ function loadLeaderboard(contextId) {
   LEADERBOARD_DATA = arr;
   renderLeaderboard(arr);
 
-  // Burada Firebase tarafındaki veri akışını yönetiyorum.
+  // 🔥 Firebase'ten gerçek zamanlı dinle
   subscribeLeaderboardFromFirebase(contextId);
 }
 
@@ -372,7 +379,7 @@ function saveScoreToLeaderboard(name, score, attempts, wordLength, contextId) {
   }
   renderLeaderboard(arr);
 
-  // Burada online kaydı da yap kısmını ayarlıyorum.
+  // 🔥 Online kaydı da yap
   saveScoreToFirebase(item, contextId);
 }
 
@@ -402,7 +409,7 @@ function setLeaderboardVisible(isVisible) {
   panel.style.display = isVisible ? "block" : "none";
 }
 
-/* Burada oyun durumu board kısmını ayarlıyorum. */
+/* ================== OYUN DURUMU & BOARD ================== */
 
 function resetGameState(secretWord, contextId) {
   SECRET_WORD        = secretWord;
@@ -425,6 +432,12 @@ function resetGameState(secretWord, contextId) {
     for (let c = 0; c < COLS; c++) {
       const tile  = document.createElement("div");
       tile.className = "tile";
+      tile.dataset.r = String(r);
+      tile.dataset.c = String(c);
+      tile.addEventListener("pointerdown", (ev) => {
+        ev.preventDefault();
+        setActiveCell(r, c);
+      });
       const inner = document.createElement("div");
       inner.className = "tile-inner";
       inner.textContent = "";
@@ -446,7 +459,7 @@ function setStatus(message, color) {
   statusElem.style.color = color || "#e5e7eb";
 }
 
-/* Burada klavye girişlerini yönetiyorum. */
+/* ================== KLAVYE ================== */
 
 function buildKeyboard() {
   const keyboardElem = document.getElementById("keyboard");
@@ -521,7 +534,7 @@ function detachKeydown() {
   }
 }
 
-/* Burada klavye girişlerini yönetiyorum. */
+/* ================== KLAVYE / GİRİŞ İŞLEME ================== */
 
 function handleKey(key) {
 
@@ -538,16 +551,30 @@ function handleKey(key) {
     return;
   }
   if (key === "BACK") {
-    if (currentCol > 0) {
-      currentCol--;
-      setTile(currentRow, currentCol, "");
+    // Seçili kutuyu mantıklı şekilde sil
+    const col = Math.min(currentCol, COLS - 1);
+    const cur = getTileChar(currentRow, col);
+    if (cur) {
+      setTile(currentRow, col, "");
+      currentCol = col;
+    } else if (col > 0) {
+      setTile(currentRow, col - 1, "");
+      currentCol = col - 1;
     }
+    renderActiveCell();
     return;
   }
 
   if (currentCol >= COLS) return;
+  // Seçili kutuya yaz + bir sonraki kutuya ilerle
   setTile(currentRow, currentCol, key);
-  currentCol++;
+  currentCol = Math.min(currentCol + 1, COLS - 1);
+  renderActiveCell();
+}
+
+function getTileChar(r, c) {
+  const inner = tiles[r][c].querySelector(".tile-inner");
+  return (inner.textContent || "").trim();
 }
 
 function setTile(r, c, ch) {
@@ -556,6 +583,33 @@ function setTile(r, c, ch) {
   inner.textContent = ch;
   if (ch) tile.classList.add("tile-filled");
   else tile.classList.remove("tile-filled");
+}
+
+
+/* ================== SEÇİLİ KUTU (TIKLA + YAZ) ==================
+   - Yazarken/silerken hangi kutunun aktif olduğunu ben yönetiyorum.
+   - Fare ile kutuya tıklayınca imleç o kutuya gider.
+   - Ctrl/Alt/Meta kısayollarında harf yazmayı engelliyorum.
+*/
+function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+
+function setActiveCell(r, c) {
+  // Sadece aktif satırda seçim yapılır
+  if (r !== currentRow) return;
+  currentCol = clamp(c, 0, COLS - 1);
+  renderActiveCell();
+}
+
+function renderActiveCell() {
+  // Tüm seçimi temizle
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      tiles[r][c].classList.remove("tile-selected");
+    }
+  }
+  // Aktif satır + aktif kolon
+  const col = clamp(currentCol, 0, COLS - 1);
+  tiles[currentRow][col].classList.add("tile-selected");
 }
 
 function getCurrentGuess() {
@@ -567,7 +621,7 @@ function getCurrentGuess() {
   return guess;
 }
 
-/* Burada tahmi̇n değerlendi̇rme kısmını ayarlıyorum. */
+/* ================== TAHMİN DEĞERLENDİRME ================== */
 
 function submitGuess() {
 
@@ -605,7 +659,7 @@ function submitGuess() {
     );
     const name = getPlayerName();
 
-    // Burada oda/grup yarış modu akışını yönetiyorum.
+    // ✅ Leaderboard sadece Grup Yarışı modunda
     if (CURRENT_GAME_TYPE === "group") {
       saveScoreToLeaderboard(
         name,
@@ -618,7 +672,7 @@ function submitGuess() {
 
     setStatus(`Tebrikler, kelimeyi buldun! 🎉 Skorun: ${score}`, "#22c55e");
     finished = true;
-    // Burada solo mod akışını yönetiyorum.
+    // ✅ Solo modda KAZANINCA popup aç
 if (CURRENT_GAME_TYPE === "solo" || CURRENT_GAME_TYPE === "duel-guess") {
   const titleEl = document.getElementById("endgame-title");
   if (titleEl) titleEl.textContent = (CURRENT_GAME_TYPE === "duel-guess") ? "Düello bitti! 🎉" : "Tebrikler! 🎉";
@@ -631,7 +685,7 @@ if (CURRENT_GAME_TYPE === "solo" || CURRENT_GAME_TYPE === "duel-guess") {
     setStatus("Bitti! Kelimeyi bulamadın.", "#f97316");
     finished = true;
 
-    // Burada solo mod akışını yönetiyorum.
+    // ✅ Solo/Düello kaybedince popup
     if (CURRENT_GAME_TYPE === "solo" || CURRENT_GAME_TYPE === "duel-guess") {
       const titleEl = document.getElementById("endgame-title");
       if (titleEl) titleEl.textContent = (CURRENT_GAME_TYPE === "duel-guess") ? "Düello bitti" : "Oyun bitti";
@@ -646,9 +700,9 @@ if (CURRENT_GAME_TYPE === "solo" || CURRENT_GAME_TYPE === "duel-guess") {
 }
 
 
-// Burada ilgili kısmı ayarlıyorum.
-// Burada solo mod akışını yönetiyorum.
-// Burada ilgili kısmı ayarlıyorum.
+// ===============================
+// SOLO BİTİŞ POPUP (LOSE)
+// ===============================
 function openEndgameModal(word) {
   const modal = document.getElementById("endgame-modal");
   const wordEl = document.getElementById("endgame-word");
@@ -674,25 +728,25 @@ function bindEndgameModalEvents() {
 
   if (btnClose) btnClose.addEventListener("click", () => closeEndgameModal());
 
-  // Burada oda/grup yarış modu akışını yönetiyorum.
+  // Modal dışına tıklayınca kapat
   if (modal) {
     modal.addEventListener("click", (e) => {
       if (e.target === modal) closeEndgameModal();
     });
   }
 
-  // Burada yeni oyun tekrar oyna kısmını ayarlıyorum.
+  // Yeni oyun / tekrar oyna
   if (btnNew) {
     btnNew.addEventListener("click", () => {
       closeEndgameModal();
 
-      // Burada solo mod akışını yönetiyorum.
+      // SOLO: aynı uzunlukta yeni random kelime
       if (CURRENT_GAME_TYPE === "solo") {
         startSoloWithCurrentMode();
         return;
       }
 
-      // Burada düello tahmi̇n aynı düelloyu tekrar oyna kısmını ayarlıyorum.
+      // DÜELLO TAHMİN: aynı düelloyu tekrar oyna
       if (CURRENT_GAME_TYPE === "duel-guess") {
         const badgeMode = document.getElementById("badge-game-mode");
         if (badgeMode) {
@@ -706,7 +760,7 @@ function bindEndgameModalEvents() {
         return;
       }
 
-      // Burada diğer modlar menüye dön kısmını ayarlıyorum.
+      // Diğer modlar: menüye dön
       showScreen("screen-home");
     });
   }
@@ -714,9 +768,9 @@ function bindEndgameModalEvents() {
 
 
 function startSoloWithCurrentMode() {
-  // Burada current_mode 3 8 veya mod value kısmını ayarlıyorum.
+  // CURRENT_MODE: "3".."8" veya mod value
   const modeValue = String(CURRENT_MODE || "5");
-  // Burada pickrandomword fonksiyonun zaten var kısmını ayarlıyorum.
+  // pickRandomWord fonksiyonun zaten var
   const word = pickRandomWord(modeValue);
   const contextId = `solo:${modeValue}`;
   CURRENT_GAME_TYPE = "solo";
@@ -780,18 +834,18 @@ function colorRow(rowIndex, guess, result) {
   }
 }
 
-/* Burada mod başlatma fonksi̇yonlari kısmını ayarlıyorum. */
-/* Burada solo mod akışını yönetiyorum. */
+/* ================== MOD BAŞLATMA FONKSİYONLARI ================== */
+/* ---- SOLO MOD ---- */
 
 function startSoloFromCreator() {
   const modeSelect = document.getElementById("mode-select");
-  const modeStr    = modeSelect ? modeSelect.value : "5"; // Burada 3 4 5 6 7 8 kısmını ayarlıyorum.
+  const modeStr    = modeSelect ? modeSelect.value : "5"; // "3","4","5","6","7","8"
   const targetLen  = parseInt(modeStr, 10) || 5;
 
-  // Burada sözlükten kelime çek kısmını ayarlıyorum.
+  // Sözlükten kelime çek
   let word = pickRandomWord(modeStr);
 
-  // Burada her ihtimale karşı temizle zorunlu olarak kısmını ayarlıyorum.
+  // Her ihtimale karşı temizle + zorunlu olarak seçilen uzunluğa ayarla
   word = trUpper(word).replace(/[^A-ZÇĞİÖŞÜI]/g, "");
 
   if (word.length > targetLen) {
@@ -819,7 +873,7 @@ function startSoloFromCreator() {
   showScreen("screen-game");
 }
 
-/* Burada ---- düello modu link oluşturma ---- kısmını ayarlıyorum. */
+/* ---- DÜELLO MODU (LINK OLUŞTURMA) ---- */
 
 function createDuelLink() {
   const secretInput = document.getElementById("secret-input");
@@ -845,10 +899,10 @@ function createDuelLink() {
     return;
   }
 
-  // Burada oda/grup yarış modu akışını yönetiyorum.
+  // ✅ Yeni sistem: Grup modu gibi 5 haneli kısa kod
   const duelCode = generateShortCode(5);
 
-  // Burada Firebase tarafındaki veri akışını yönetiyorum.
+  // Firebase'e kaydet (arkadaş kodla girsin diye)
   if (!FIREBASE_DB) {
     alert("Firebase bağlantısı yok. Sayfayı yenileyip tekrar dene.");
     return;
@@ -860,9 +914,9 @@ function createDuelLink() {
     mode: len,
     createdAt: Date.now()
   }).then(() => {
-    // Burada ekranda sadece 5 haneli kod görünsün kısmını ayarlıyorum.
+    // Ekranda sadece 5 haneli kod görünsün
     linkInput.value = duelCode;
-    // Burada arayüz yerleşimini/uyumluluğunu ayarlıyorum.
+    // Link olarak da paylaşılabilsin (UI'da göstermiyoruz)
     linkInput.dataset.duelUrl = `${location.origin}${location.pathname}?duel=${encodeURIComponent(duelCode)}`;
     linkWrap.style.display = "block";
   }).catch(err => {
@@ -872,7 +926,7 @@ function createDuelLink() {
 }
 
 
-/* Burada ---- düello modu link i̇le gi̇renler kısmını ayarlıyorum. */
+/* ---- DÜELLO MODU (LINK İLE GİRENLER) ---- */
 
 function handleDuelloLinkIfAny() {
   const duelCode = (getQueryParam("duel") || "").trim().toUpperCase();
@@ -922,7 +976,7 @@ function joinDuelByCode() {
 
   let code = (input.value || "").trim();
 
-  // Burada düello modu akışını yönetiyorum.
+  // Kullanıcı yanlışlıkla tam URL yapıştırdıysa ?duel=... kısmını çek
   if (/^https?:\/\//i.test(code)) {
     try {
       const u = new URL(code);
@@ -977,7 +1031,7 @@ function joinDuelByCode() {
 }
 
 
-/* Burada oda/grup yarış modu akışını yönetiyorum. */
+/* ---- GRUP MODU – ODA KODU ---- */
 
 function generateShortCode(length = 5) {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -1003,7 +1057,7 @@ function createGroupRoom() {
   CURRENT_ROOM   = roomCode;
   SECRET_WORD    = word;
 
-  // Burada Firebase tarafındaki veri akışını yönetiyorum.
+  // 🔥 Oda bilgisini Firebase'e yaz
   if (FIREBASE_DB) {
     const path = getRoomPath(roomCode);
     FIREBASE_DB.ref(path).set({
@@ -1085,12 +1139,12 @@ function startGroupGame() {
   showScreen("screen-game");
 }
 
-/* Burada uygulama başlatma kısmını ayarlıyorum. */
+/* ================== UYGULAMA BAŞLATMA ================== */
 
-/* Burada uygulama başlatma kısmını ayarlıyorum. */
+/* ================== UYGULAMA BAŞLATMA ================== */
 
 function setupUIEvents() {
-  // Burada oyun açık mı kontrolü ana menü kısmını ayarlıyorum.
+  // Oyun açık mı kontrolü (ana menü için)
   function guardGameActive() {
     if (typeof GAME_ACTIVE !== "undefined" && !GAME_ACTIVE) {
       alert("Şu an oyun kapalı. Admin açtığında tekrar deneyebilirsin.");
@@ -1099,20 +1153,20 @@ function setupUIEvents() {
     return true;
   }
 
-  // Burada creator ekranındaki oyun modu alanı dropdown kısmını ayarlıyorum.
+  // Creator ekranındaki "Oyun modu" alanı (dropdown'un parent'ı)
   const modeField    =
     document.querySelector(".creator-field label[for='mode-select']")?.parentElement;
 
-  // Burada düello için kod ile giriş alanı kısmını ayarlıyorum.
+  // Düello için "kod ile giriş" alanı
   const duelJoinWrap = document.getElementById("duel-join-wrap");
 
-  /* Burada ana menü kısmını ayarlıyorum. */
+  /* Ana menü */
   const btnHomeSolo     = document.getElementById("btn-home-solo");
   const btnHomeDuel     = document.getElementById("btn-home-duel");
   const btnHomeGroup    = document.getElementById("btn-home-group");
   const btnHomeSettings = document.getElementById("btn-home-settings");
 
-  // Burada creator ekranındaki butonlar kısmını ayarlıyorum.
+  // Creator ekranındaki butonlar
   const soloStartBtnEl  = document.getElementById("solo-start-btn");
   const createLinkBtnEl = document.getElementById("create-link-btn");
 
@@ -1132,8 +1186,8 @@ function setupUIEvents() {
 
       if (secretField)  secretField.style.display  = "none";
       if (linkWrap)     linkWrap.style.display     = "none";
-      if (modeField)    modeField.style.display    = "block";   // Burada solo mod akışını yönetiyorum.
-      if (duelJoinWrap) duelJoinWrap.style.display = "none";    // Burada kod girişi gizli kısmını ayarlıyorum.
+      if (modeField)    modeField.style.display    = "block";   // Solo'da dropdown açık
+      if (duelJoinWrap) duelJoinWrap.style.display = "none";    // Kod girişi gizli
 
       if (soloStartBtnEl)  soloStartBtnEl.style.display  = "block";
       if (createLinkBtnEl) createLinkBtnEl.style.display = "none";
@@ -1156,8 +1210,8 @@ function setupUIEvents() {
 
       if (secretField)  secretField.style.display  = "block";
       if (linkWrap)     linkWrap.style.display     = "none";
-      if (modeField)    modeField.style.display    = "none";    // Burada düello da dropdown yok kısmını ayarlıyorum.
-      if (duelJoinWrap) duelJoinWrap.style.display = "block";   // Burada kod girişi görünür kısmını ayarlıyorum.
+      if (modeField)    modeField.style.display    = "none";    // Düello'da dropdown yok
+      if (duelJoinWrap) duelJoinWrap.style.display = "block";   // Kod girişi görünür
 
       if (soloStartBtnEl)  soloStartBtnEl.style.display  = "none";
       if (createLinkBtnEl) createLinkBtnEl.style.display = "block";
@@ -1179,13 +1233,13 @@ function setupUIEvents() {
     });
   }
 
-/* Burada creator screen back kısmını ayarlıyorum. */
+/* Creator screen back */
 const btnBackCreator = document.getElementById("btn-back-from-creator");
 if (btnBackCreator) {
   btnBackCreator.addEventListener("click", () => {
     showScreen("screen-home");
 
-    // Burada düello kodu alanını ana menüye dönünce kısmını ayarlıyorum.
+    // Düello kodu alanını ana menüye dönünce gizle
     const duelJoinWrap = document.getElementById("duel-join-wrap");
     if (duelJoinWrap) {
       duelJoinWrap.style.display = "none";
@@ -1194,7 +1248,7 @@ if (btnBackCreator) {
 }
 
 
-  /* Burada oda/grup yarış modu akışını yönetiyorum. */
+  /* Group menu back */
   const btnBackGroupMenu = document.getElementById("btn-back-from-group-menu");
   if (btnBackGroupMenu) {
     btnBackGroupMenu.addEventListener("click", () => {
@@ -1202,7 +1256,7 @@ if (btnBackCreator) {
     });
   }
 
-  /* Burada oda/grup yarış modu akışını yönetiyorum. */
+  /* Group create */
   const btnGroupCreate = document.getElementById("btn-group-create");
   if (btnGroupCreate) {
     btnGroupCreate.addEventListener("click", () => {
@@ -1244,7 +1298,7 @@ if (btnBackCreator) {
     });
   }
 
-  /* Burada oda/grup yarış modu akışını yönetiyorum. */
+  /* Group create ekranından geri */
   const btnBackGroupCreate = document.getElementById("btn-back-from-group-create");
   if (btnBackGroupCreate) {
     btnBackGroupCreate.addEventListener("click", () => {
@@ -1252,7 +1306,7 @@ if (btnBackCreator) {
     });
   }
 
-  /* Burada oda/grup yarış modu akışını yönetiyorum. */
+  /* Group join */
   const btnGroupJoin = document.getElementById("btn-group-join");
   if (btnGroupJoin) {
     btnGroupJoin.addEventListener("click", () => {
@@ -1276,7 +1330,7 @@ if (btnBackCreator) {
     });
   }
 
-  /* Burada solo mod akışını yönetiyorum. */
+  /* Solo start */
   const soloStartBtn = document.getElementById("solo-start-btn");
   if (soloStartBtn) {
     soloStartBtn.addEventListener("click", () => {
@@ -1285,7 +1339,7 @@ if (btnBackCreator) {
     });
   }
 
-  /* Burada düello modu akışını yönetiyorum. */
+  /* Duel link create */
   const createLinkBtn = document.getElementById("create-link-btn");
   if (createLinkBtn) {
     createLinkBtn.addEventListener("click", () => {
@@ -1305,7 +1359,7 @@ if (btnBackCreator) {
     });
   }
 
-  // Burada düello oyun kodu ile giriş kısmını ayarlıyorum.
+  // Düello: oyun kodu ile giriş
   const btnDuelJoinNow = document.getElementById("btn-duel-join-now");
   if (btnDuelJoinNow) {
     btnDuelJoinNow.addEventListener("click", () => {
@@ -1313,7 +1367,7 @@ if (btnBackCreator) {
     });
   }
 
-  /* Burada game screen back kısmını ayarlıyorum. */
+  /* Game screen back */
   const btnBackGame = document.getElementById("btn-back-from-game");
   if (btnBackGame) {
     btnBackGame.addEventListener("click", () => {
@@ -1324,7 +1378,7 @@ if (btnBackCreator) {
 });
   }
 
-  /* Burada settings back actions kısmını ayarlıyorum. */
+  /* Settings back & actions */
   const btnBackSettings = document.getElementById("btn-back-from-settings");
   if (btnBackSettings) {
     btnBackSettings.addEventListener("click", () => {
@@ -1356,76 +1410,88 @@ if (btnBackCreator) {
   }
 }
 
-/* Burada window load kısmını ayarlıyorum. */
+/* ================== WINDOW LOAD ================== */
 
 window.addEventListener("load", async () => {
   if (window.WORDS_READY) {
     try { await window.WORDS_READY; } catch (e) { console.warn(e); }
   }
 
-  initFirebaseDb();          // Burada Firebase tarafındaki veri akışını yönetiyorum.
+  initFirebaseDb();          // 🔥 Firebase Realtime DB'yi başlat
   loadThemeFromStorage();
   setupUIEvents();
   bindEndgameModalEvents();
   handleDuelloLinkIfAny();
 });
-// Burada Service Worker cache stratejisini yönetiyorum.
+
+/* ================== YARDIM ( ? ) ==================
+   Her ekranda kısaca nasıl oynanır + teknik bilgi.
+*/
+function openHelp(topic) {
+  const modal = document.getElementById("help-modal");
+  const title = document.getElementById("help-title");
+  const body  = document.getElementById("help-body");
+  if (!modal || !title || !body) return;
+
+  const activeScreen = document.querySelector(".screen-active");
+  const screenId = activeScreen ? activeScreen.id : "home-screen";
+
+  const map = {
+    "home-screen": {
+      t: "Menü",
+      b: "Mod seçip oyuna giriyorum. Solo/Düello/Grup Yarış/Ayarlar."
+    },
+    "solo-screen": {
+      t: "Solo Mod",
+      b: "Amaç: gizli kelimeyi tahmin etmek. Kutulara tıklayıp harf girebilirim. Enter gönderir, Backspace siler."
+    },
+    "duel-screen": {
+      t: "Düello",
+      b: "Kod oluşturup arkadaşla paylaşıyorum. Kodla katılınca aynı gizli kelime üzerinden yarışıyoruz."
+    },
+    "group-screen": {
+      t: "Grup Yarış",
+      b: "Oda oluşturup kodu paylaşıyorum. Odaya katılanlar aynı kelimeyle yarışıyor."
+    },
+    "settings-screen": {
+      t: "Ayarlar",
+      b: "Renkleri buradan değiştiriyorum. İstersem varsayılana dönüp kaydediyorum."
+    }
+  };
+
+  const info = map[screenId] || { t: "Yardım", b: "Kısaca: mod seç, kelimeyi tahmin et." };
+  title.textContent = info.t;
+  body.innerHTML = `
+    <p>${info.b}</p>
+    <hr style="border:none;border-top:1px solid rgba(255,255,255,0.12);margin:12px 0;">
+    <p><strong>Teknik:</strong> HTML + CSS + JavaScript. Çok oyunculu kısımlar Firebase Realtime Database ile.</p>
+    <p><strong>İpucu:</strong> Ctrl/Alt/Win kısayolları oyuna harf basmaz.</p>
+  `;
+
+  modal.classList.remove("hidden");
+}
+
+function closeHelp() {
+  const modal = document.getElementById("help-modal");
+  if (modal) modal.classList.add("hidden");
+}
+
+document.addEventListener("click", (e) => {
+  const t = e.target;
+  if (t && t.matches && t.matches(".help-btn")) {
+    openHelp(t.getAttribute("data-help") || "page");
+  }
+  if (t && t.hasAttribute && t.hasAttribute("data-close-help")) closeHelp();
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeHelp();
+});
+
+// PWA Service Worker register
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("/hiddenword/sw.js");
   });
 }
 
-/* Burada hw selected cell highlight no caret kısmını ayarlıyorum. */
-(() => {
-  const SELECTED_CLASS = "hw-selected";
-
-  // Burada sürüm/uyumluluk için not düşüyorum.
-  const CELL_SELECTOR = [
-    ".cell",
-    ".tile",
-    ".box",
-    ".letter-box",
-    ".grid-cell",
-    ".guess-cell",
-    "[data-cell]"
-  ].join(",");
-
-  function clearSelected() {
-    document.querySelectorAll("." + SELECTED_CLASS).forEach(el => el.classList.remove(SELECTED_CLASS));
-  }
-
-  function setSelected(el) {
-    if (!el) return;
-    clearSelected();
-    el.classList.add(SELECTED_CLASS);
-
-    // Burada prevent the browser from treating the kısmını ayarlıyorum.
-    if (el.getAttribute && el.getAttribute("contenteditable") === "true") {
-      el.setAttribute("contenteditable", "false");
-    }
-    // Burada also avoid focus caret in case kısmını ayarlıyorum.
-    try { el.blur?.(); } catch (_) {}
-  }
-
-  // Burada event delegation works even if cells kısmını ayarlıyorum.
-  document.addEventListener("click", (e) => {
-    const target = e.target?.closest?.(CELL_SELECTOR);
-    if (!target) return;
-
-    // Burada only highlight cells that look like kısmını ayarlıyorum.
-    const tag = (target.tagName || "").toLowerCase();
-    if (tag === "button" || target.classList.contains("btn") || target.closest("button")) return;
-
-    setSelected(target);
-  });
-
-  // Burada hide caret even if something is kısmını ayarlıyorum.
-  document.addEventListener("focusin", (e) => {
-    const el = e.target?.closest?.(CELL_SELECTOR);
-    if (el) {
-      // Burada if focus lands inside a cell kısmını ayarlıyorum.
-      try { e.target.blur?.(); } catch (_) {}
-    }
-  });
-})();
