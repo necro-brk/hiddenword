@@ -2,7 +2,7 @@
    Ben burada PWA cache yönetimini yapıyorum.
    Yeni sürüm geldiğinde eski cache'i temizleyip sayfayı güncelliyorum.
 */
-const CACHE_NAME = "hiddenword-v3-20251222200122";
+const CACHE_NAME = "hiddenword-v4-20251224170000";
 
 const ASSETS = [
   "./",
