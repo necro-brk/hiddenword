@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- Hidden Word: HTML iskeleti (benim tarafım). Ekranlar ve modal yapısı burada. -->
 <html lang="tr">
 <head>
   <meta charset="UTF-8" />
@@ -505,7 +506,7 @@ body {
 <body>
 <div id="app">
 
-  <!-- Burada ana ekran kısmını ayarlıyorum. -->
+  <!-- ========== ANA EKRAN ========== -->
   <section id="screen-home" class="screen-active">
     <div class="panel">
       <div class="home-brand">
@@ -526,7 +527,7 @@ body {
     </div>
   </section>
 
-  <!-- Burada solo mod akışını yönetiyorum. -->
+  <!-- ========== CREATOR EKRANI (Solo + Düello) ========== -->
   <section id="screen-creator" class="screen-hidden">
     <div class="panel">
       <div class="top-bar">
@@ -552,6 +553,7 @@ body {
         <div class="creator-field">
           <label for="secret-input">Gizli kelime (sadece düello linki için):</label>
           <input id="secret-input" type="text" placeholder="Örn: ARABA" />
+          <div class="small-info"></div>
         </div>
         <div style="flex:0 0 auto; display:flex; flex-direction:column; gap:6px;">
           <button id="solo-start-btn" class="gradient small">Solo başlat</button>
@@ -577,7 +579,7 @@ body {
   </section>
 
 
-  <!-- Burada oyun ekrani kısmını ayarlıyorum. -->
+  <!-- ========== OYUN EKRANI ========== -->
   <section id="screen-game" class="screen-hidden">
     <div class="panel">
       <div class="top-bar">
@@ -618,7 +620,7 @@ body {
     </div>
   </section>
 
-  <!-- Burada oda/grup yarış modu akışını yönetiyorum. -->
+  <!-- ========== GRUP MENÜ / CREATE / JOIN (şimdilik basit) ========== -->
   <section id="screen-group-menu" class="screen-hidden">
     <div class="panel">
       <div class="top-bar">
@@ -685,7 +687,7 @@ body {
     </div>
   </section>
 
-  <!-- Burada ayarlar ekrani kısmını ayarlıyorum. -->
+  <!-- ========== AYARLAR EKRANI ========== -->
   <section id="screen-settings" class="screen-hidden">
     <div class="panel">
       <div class="top-bar">
@@ -722,7 +724,7 @@ body {
 
 </div>
 
-  <!-- Burada Firebase tarafındaki veri akışını yönetiyorum. -->
+  <!-- Firebase SDK (compat sürümü) -->
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
 
@@ -756,10 +758,10 @@ const firebaseConfig = {
 </script>
 
 
-  <!-- Burada sözlük ve oyun scriptleri kısmını ayarlıyorum. -->
+  <!-- Sözlük ve oyun scriptleri -->
   <script src="words_tr.js"></script>
   <script src="script.js"></script>
-<!-- Burada oda/grup yarış modu akışını yönetiyorum. -->
+<!-- SOLO endgame modal -->
 <div id="endgame-modal" class="endgame-modal" aria-hidden="true">
   <div class="endgame-card" role="dialog" aria-modal="true" aria-labelledby="endgame-title">
     <h3 id="endgame-title">Oyun bitti</h3>
@@ -771,8 +773,22 @@ const firebaseConfig = {
   </div>
 </div>
 
+
+  <!-- Yardım penceresi -->
+  <div id="help-modal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-backdrop" data-close-help></div>
+    <div class="modal-card" role="document">
+      <div class="modal-head">
+        <div id="help-title" class="modal-title">Yardım</div>
+        <button class="modal-close" type="button" data-close-help aria-label="Kapat">✕</button>
+      </div>
+      <div id="help-body" class="modal-body"></div>
+    </div>
+  </div>
+
 </body>
 </html>
+
 
 
 
