@@ -1,16 +1,4 @@
 /* Hidden Word: Oyun mantığı (ben). Mod geçişleri, input, Firebase ve UI kontrolü burada. */
-
-let GAME_ACTIVE = true; // Ben: oyun açık/kapalı durumunu buradan yönetiyorum
-
-function updateVh() {
-  // Ben: mobil tarayıcı adres çubuğu oynadıkça yükseklik sapmasını azaltıyorum
-  const vh = window.innerHeight * 0.01;
-  document.documentElement.style.setProperty("--vh", `${vh}px`);
-}
-window.addEventListener("resize", updateVh);
-window.addEventListener("orientationchange", updateVh);
-updateVh();
-
 /**************************************************
  * Hidden Word – Çok modlu kelime oyunu
  * Bu dosyayı script.js olarak kaydet.
@@ -48,6 +36,8 @@ const DEFAULT_THEME = {
 
 /* ================== GLOBAL STATE ================== */
 
+
+let GAME_ACTIVE = true; // Oyun açık/kapalı durumu (ben)
 let CURRENT_SCREEN     = "screen-home";
 let CURRENT_GAME_TYPE  = null;   // "solo", "duel-create", "duel-guess", "group"
 let CURRENT_MODE       = "5";    // string olarak harf sayısı: "3".."8"
@@ -523,18 +513,14 @@ function attachKeydown() {
     window.removeEventListener("keydown", keydownHandler);
   }
 
+  // Ben: fiziksel klavye kontrolünü sadece oyun ekranında yönetiyorum
   keydownHandler = (e) => {
     if (finished) return;
-
-    // Ben: input/textarea içindeyken global klavyeye dokunmuyorum
-    const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
-    if (tag === "input" || tag === "textarea" || tag === "select") return;
-
-    // Ben: fiziksel klavye sadece oyun ekranında çalışıyor
     if (CURRENT_SCREEN !== "screen-game") return;
 
-    // Ben: Ctrl/Alt/Meta basılıyken oyuna harf düşmesin + kısayolları engelliyorum
+    // Ben: Ctrl/Alt/Meta kombinasyonları oyuna karakter basmasın
     if (e.ctrlKey || e.altKey || e.metaKey) {
+      // Ben: Ctrl+S gibi tarayıcı kısayollarını oyun ekranında kesiyorum
       e.preventDefault();
       return;
     }
@@ -546,7 +532,6 @@ function attachKeydown() {
       handleKey("ENTER");
       return;
     }
-
     if (key === "Backspace") {
       e.preventDefault();
       handleKey("BACK");
@@ -1204,6 +1189,7 @@ function setupUIEvents() {
   const btnHomeDuel     = document.getElementById("btn-home-duel");
   const btnHomeGroup    = document.getElementById("btn-home-group");
   const btnHomeSettings = document.getElementById("btn-home-settings");
+  const btnHelpTour     = document.getElementById("btn-help-tour");
 
   // Creator ekranındaki butonlar
   const soloStartBtnEl  = document.getElementById("solo-start-btn");
@@ -1270,6 +1256,11 @@ function setupUIEvents() {
       loadSettingsIntoUI();
       showScreen("screen-settings");
     });
+
+  if (btnHelpTour) {
+    btnHelpTour.addEventListener("click", () => startOnboarding(true));
+  }
+
   }
 
 /* Creator screen back */
@@ -1461,7 +1452,126 @@ window.addEventListener("load", async () => {
   setupUIEvents();
   bindEndgameModalEvents();
   handleDuelloLinkIfAny();
+  // Ben: ilk kez açanlara menü turu gösteriyorum
+  startOnboarding(false);
 });
+/* ================== İLK KULLANIM TURU (ben) ==================
+   Kullanıcı ilk kez açınca menüde modları sırayla tanıtıyorum.
+*/
+
+const ONBOARD_KEY = "hw_onboarding_done";
+
+function startOnboarding(force = false) {
+  try {
+    if (!force && localStorage.getItem(ONBOARD_KEY) === "1") return;
+  } catch (_) {}
+
+  // Ben: sadece ana menüde başlatıyorum
+  if (CURRENT_SCREEN !== "screen-home") return;
+
+  const overlay = document.getElementById("tour-overlay");
+  const tooltip = document.getElementById("tour-tooltip");
+  const titleEl = document.getElementById("tour-title");
+  const bodyEl  = document.getElementById("tour-body");
+  const btnNext = document.getElementById("tour-next");
+  const btnSkip = document.getElementById("tour-skip");
+
+  if (!overlay || !tooltip || !titleEl || !bodyEl || !btnNext || !btnSkip) return;
+
+  const steps = [
+    { sel: "#btn-home-solo",     t: "Solo Mod",   b: "Tek başıma oynuyorum. Kutulara tıklayıp harf yazıyorum, Enter ile gönderiyorum." },
+    { sel: "#btn-home-duel",     t: "Düello",     b: "Arkadaşımla kapışıyorum. Kod oluşturup paylaşıyorum veya kod ile odaya giriyorum." },
+    { sel: "#btn-home-group",    t: "Grup Yarış", b: "Oda kurup birden fazla kişiyle aynı anda yarışıyorum." },
+    { sel: "#btn-home-settings", t: "Ayarlar",    b: "Kullanıcı adımı ve tema ayarlarını yönetiyorum." }
+  ];
+
+  let stepIndex = 0;
+  let currentTarget = null;
+
+  function cleanupHighlight() {
+    if (currentTarget) currentTarget.classList.remove("tour-highlight");
+    currentTarget = null;
+  }
+
+  function closeTour(markDone = true) {
+    cleanupHighlight();
+    overlay.classList.remove("active");
+    overlay.setAttribute("aria-hidden", "true");
+    window.removeEventListener("resize", onResize);
+    if (markDone) {
+      try { localStorage.setItem(ONBOARD_KEY, "1"); } catch (_) {}
+    }
+  }
+
+  function positionTooltip(target) {
+    const r = target.getBoundingClientRect();
+    const pad = 12;
+
+    // Tooltip ölçüsünü almak için önce resetliyorum
+    tooltip.style.left = "0px";
+    tooltip.style.top  = "0px";
+
+    const tw = tooltip.offsetWidth || 300;
+    const th = tooltip.offsetHeight || 160;
+
+    let left = r.left + (r.width / 2) - (tw / 2);
+    left = Math.max(pad, Math.min(left, window.innerWidth - tw - pad));
+
+    let top = r.bottom + 10;
+    if (top + th + pad > window.innerHeight) {
+      top = r.top - th - 10;
+    }
+    top = Math.max(pad, Math.min(top, window.innerHeight - th - pad));
+
+    tooltip.style.left = left + "px";
+    tooltip.style.top  = top + "px";
+  }
+
+  function renderStep() {
+    cleanupHighlight();
+
+    const s = steps[stepIndex];
+    const target = document.querySelector(s.sel);
+    if (!target) {
+      closeTour(false);
+      return;
+    }
+
+    currentTarget = target;
+    target.classList.add("tour-highlight");
+
+    titleEl.textContent = s.t;
+    bodyEl.textContent  = s.b;
+
+    btnNext.textContent = (stepIndex === steps.length - 1) ? "Bitir" : "Sıradaki";
+
+    overlay.classList.add("active");
+    overlay.setAttribute("aria-hidden", "false");
+
+    try { target.scrollIntoView({ block: "center", behavior: "smooth" }); } catch(_) {}
+
+    setTimeout(() => positionTooltip(target), 80);
+  }
+
+  function onResize() {
+    if (currentTarget) positionTooltip(currentTarget);
+  }
+
+  btnNext.onclick = () => {
+    if (stepIndex < steps.length - 1) {
+      stepIndex += 1;
+      renderStep();
+    } else {
+      closeTour(true);
+    }
+  };
+
+  btnSkip.onclick = () => closeTour(true);
+
+  window.addEventListener("resize", onResize);
+
+  renderStep();
+}
 
 /* ================== YARDIM ( ? ) ==================
    Her ekranda kısaca nasıl oynanır + teknik bilgi.
@@ -1527,24 +1637,10 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") closeHelp();
 });
 
-// PWA Service Worker register (ben)
+// PWA Service Worker register
 if ("serviceWorker" in navigator) {
-  window.addEventListener("load", async () => {
-    try {
-      const reg = await navigator.serviceWorker.register("/hiddenword/sw.js");
-
-      // Ben: yeni sürüm varsa hızlıca update tetikliyorum
-      if (reg && reg.update) reg.update();
-
-      // Ben: controller değişince (yeni SW aktif olunca) bir kere reload ediyorum
-      let reloaded = false;
-      navigator.serviceWorker.addEventListener("controllerchange", () => {
-        if (reloaded) return;
-        reloaded = true;
-        window.location.reload();
-      });
-    } catch (e) {
-      console.warn("SW register hata:", e);
-    }
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/hiddenword/sw.js");
   });
 }
+
