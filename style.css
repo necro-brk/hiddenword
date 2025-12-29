@@ -676,12 +676,9 @@ select {
 
 /* Seçili kutu vurgusu (caret yok) */
 .tile.tile-selected {
-  /* Ben: seçili kutu rengi bastırmasın; sadece çerçeve/parıltı gösteriyorum */
   border-color: rgba(255,255,255,0.65);
-  box-shadow:
-    0 0 0 2px rgba(59,130,246,0.95),
-    0 0 14px rgba(59,130,246,0.35);
-  /* background kaldırıldı: tile-correct / tile-present / tile-absent renkleri görünür kalsın */
+  box-shadow: 0 0 0 2px rgba(90,155,255,0.18);
+  background: rgba(90,155,255,0.08);
 }
 .tile:focus { outline: none; }
 
@@ -692,4 +689,20 @@ select {
   .keyboard { width: 100%; }
   .keyboard .kb-row { gap: 6px; }
   .keyboard .kb-key { min-width: 30px; padding: 10px 8px; font-size: 13px; }
+}
+
+/* ================== ONBOARDING TURU (FIX) ==================
+   Ben: tooltip viewport'a göre konumlansın diye fixed kullandım.
+   Absolute/relative yüzünden sağ tarafa fırlamasın.
+*/
+#tour-overlay{
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 99999 !important;
+}
+
+#tour-tooltip{
+  position: fixed !important;
+  z-index: 100000 !important;
+  max-width: min(420px, calc(100vw - 24px)) !important;
 }
