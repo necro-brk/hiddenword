@@ -1471,18 +1471,12 @@ function startOnboarding(force = false) {
   if (CURRENT_SCREEN !== "screen-home") return;
 
   const overlay = document.getElementById("tour-overlay");
+  if (overlay) { overlay.style.position = "absolute"; overlay.style.inset = "0"; overlay.style.zIndex = "9999"; }
+
   const tooltip = document.getElementById("tour-tooltip");
+  if (tooltip) { tooltip.style.position = "absolute"; tooltip.style.zIndex = "10000"; }
+
   const titleEl = document.getElementById("tour-title");
-  // Ben: tooltip konumu viewport'a göre hesaplanıyor; container'a bağlı kalmaması için fixed yapıyorum
-  if (tooltip) {
-    tooltip.style.position = "fixed";
-    tooltip.style.zIndex = "100000";
-  }
-  if (overlay) {
-    overlay.style.position = "fixed";
-    overlay.style.inset = "0";
-    overlay.style.zIndex = "99999";
-  }
   const bodyEl  = document.getElementById("tour-body");
   const btnNext = document.getElementById("tour-next");
   const btnSkip = document.getElementById("tour-skip");
