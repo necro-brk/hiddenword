@@ -690,19 +690,3 @@ select {
   .keyboard .kb-row { gap: 6px; }
   .keyboard .kb-key { min-width: 30px; padding: 10px 8px; font-size: 13px; }
 }
-
-/* ================== ONBOARDING TURU (FIX) ==================
-   Ben: tooltip viewport'a göre konumlansın diye fixed kullandım.
-   Absolute/relative yüzünden sağ tarafa fırlamasın.
-*/
-#tour-overlay{
-  position: fixed !important;
-  inset: 0 !important;
-  z-index: 99999 !important;
-}
-
-#tour-tooltip{
-  position: fixed !important;
-  z-index: 100000 !important;
-  max-width: min(420px, calc(100vw - 24px)) !important;
-}
