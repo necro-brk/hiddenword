@@ -1192,7 +1192,15 @@ function setupUIEvents() {
   const btnHomeSettings = document.getElementById("btn-home-settings");
   const btnHelpTour     = document.getElementById("btn-help-tour");
 
-  // Creator ekranındaki butonlar
+  // Home yardım: tur sadece kullanıcı ?'ye basınca açılır
+if (btnHelpTour) {
+  btnHelpTour.addEventListener("click", () => {
+    // sadece ana menüde çalışsın
+    if (CURRENT_SCREEN === "screen-home") startOnboarding(true);
+  });
+}
+
+// Creator ekranındaki butonlar
   const soloStartBtnEl  = document.getElementById("solo-start-btn");
   const createLinkBtnEl = document.getElementById("create-link-btn");
 
@@ -1453,8 +1461,8 @@ window.addEventListener("load", async () => {
   setupUIEvents();
   bindEndgameModalEvents();
   handleDuelloLinkIfAny();
-  // Ben: ilk kez açanlara menü turu gösteriyorum
-  startOnboarding(false);
+  // İlk kullanım turu: artık otomatik başlamıyor. (? butonundan açılıyor)
+  // startOnboarding(false);
 });
 /* ================== İLK KULLANIM TURU (ben) ==================
    Kullanıcı ilk kez açınca menüde modları sırayla tanıtıyorum.
@@ -1471,6 +1479,9 @@ function startOnboarding(force = false) {
   if (CURRENT_SCREEN !== "screen-home") return;
 
   const overlay = document.getElementById("tour-overlay");
+  const panel = document.querySelector("#screen-home .panel") || document.querySelector(".panel");
+  if (panel) { panel.style.position = "relative"; }
+  if (overlay && panel && overlay.parentElement !== panel) { panel.appendChild(overlay); }
   if (overlay) { overlay.style.position = "absolute"; overlay.style.inset = "0"; overlay.style.zIndex = "9999"; }
 
   const tooltip = document.getElementById("tour-tooltip");
