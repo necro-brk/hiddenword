@@ -1464,38 +1464,58 @@ function openHelp(topic) {
   if (!modal || !title || !body) return;
 
   const activeScreen = document.querySelector(".screen-active");
-  const screenId = activeScreen ? activeScreen.id : "home-screen";
+  const screenId = activeScreen ? activeScreen.id : "screen-home";
 
-const map = {
-  "screen-home": {
-    t: "Solo Mod",
-    b: "İstediğin harf uzunluğunu seç. Gizli kelimeyi sınırlı denemede tahmin etmeye çalış."
-  },
+  const map = {
+    "screen-home": {
+      t: "Nasıl Oynanır?",
+      b: "Hidden Word, Wordle mantığıyla çalışır: gizli kelimeyi sınırlı denemede bulmaya çalış."
+    },
+    "screen-creator": {
+      t: "Nasıl Oynanır?",
+      b: "Buradan harf uzunluğunu seçip Solo başlatabilir veya Düello için oyun kodu oluşturabilirsin."
+    },
+    "screen-group": {
+      t: "Nasıl Oynanır?",
+      b: "Grup Yarış’ta oda oluşturur veya bir odaya katılırsın. Herkes aynı kelimeyi aynı anda tahmin eder."
+    },
+    "screen-settings": {
+      t: "Nasıl Oynanır?",
+      b: "Ayarlar bölümünden kullanıcı adını ve temayı değiştirebilirsin."
+    },
+    "screen-game": {
+      t: "Nasıl Oynanır?",
+      b: "Her satır bir tahmin. Harfleri yaz, doğru kelimeyi bulmak için dene."
+    }
+  };
 
-  "screen-duel": {
-    t: "Düello",
-    b: "Bir kelime belirle, oluşan kodu arkadaşınla paylaş. Arkadaşın senin seçtiğin kelimeyi tahmin etmeye çalışsın."
-  },
+  const info = map[screenId] || map["screen-home"];
 
-  "screen-group-menu": {
-    t: "Grup Yarış",
-    b: "Harf uzunluğunu seç, bir oda oluştur. Arkadaşlarınla aynı kelime üzerinden aynı anda yarış."
-  },
-
-  "screen-settings": {
-    t: "Ayarlar",
-    b: "Kullanıcı adını ve tema tercihlerini buradan düzenle."
-  }
-};
-
-
-  const info = map[screenId] || { t: "Yardım", b: "Kısaca: mod seç, kelimeyi tahmin et." };
   title.textContent = info.t;
   body.innerHTML = `
     <p>${info.b}</p>
-    <hr style="border:none;border-top:1px solid rgba(255,255,255,0.12);margin:12px 0;">
-    <p><strong>Teknik:</strong> HTML + CSS + JavaScript. Çok oyunculu kısımlar Firebase Realtime Database ile.</p>
-    <p><strong>İpucu:</strong> Ctrl/Alt/Win kısayolları oyuna harf basmaz.</p>
+
+    <h4 style="margin:12px 0 6px;">Modlar</h4>
+    <ul style="margin:0 0 10px; padding-left:18px;">
+      <li><strong>Solo:</strong> Rastgele kelimeyi tahmin et (3–8 harf).</li>
+      <li><strong>Düello:</strong> Kod oluştur, arkadaşın koda girip tahmin etsin.</li>
+      <li><strong>Grup Yarış:</strong> Oda kur, herkes aynı kelimeyle yarışsın (leaderboard aktif).</li>
+    </ul>
+
+    <h4 style="margin:10px 0 6px;">Kontroller</h4>
+    <ul style="margin:0 0 10px; padding-left:18px;">
+      <li>Harf yaz: klavyeden gir.</li>
+      <li>Sil: <strong>Backspace</strong></li>
+      <li>Gönder: <strong>Enter</strong></li>
+      <li>Kutulara tıklayarak aktif hücreyi seçebilirsin.</li>
+    </ul>
+
+    <h4 style="margin:10px 0 6px;">Renkler</h4>
+    <ul style="margin:0; padding-left:18px;">
+      <li><strong>Yeşil:</strong> Harf doğru ve doğru yerde.</li>
+      <li><strong>Sarı:</strong> Harf var ama yeri yanlış.</li>
+      <li><strong>Gri:</strong> Harf kelimede yok.</li>
+    </ul>
   `;
 
   modal.classList.remove("hidden");
