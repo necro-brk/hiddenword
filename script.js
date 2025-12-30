@@ -1192,15 +1192,7 @@ function setupUIEvents() {
   const btnHomeSettings = document.getElementById("btn-home-settings");
   const btnHelpTour     = document.getElementById("btn-help-tour");
 
-  // Home yardım: tur sadece kullanıcı ?'ye basınca açılır
-if (btnHelpTour) {
-  btnHelpTour.addEventListener("click", () => {
-    // sadece ana menüde çalışsın
-    if (CURRENT_SCREEN === "screen-home") startOnboarding(true);
-  });
-}
-
-// Creator ekranındaki butonlar
+  // Creator ekranındaki butonlar
   const soloStartBtnEl  = document.getElementById("solo-start-btn");
   const createLinkBtnEl = document.getElementById("create-link-btn");
 
@@ -1267,7 +1259,7 @@ if (btnHelpTour) {
     });
 
   if (btnHelpTour) {
-    btnHelpTour.addEventListener("click", () => startOnboarding(true));
+    btnHelpTour.addEventListener("click", () => openHelp());
   }
 
   }
@@ -1461,155 +1453,7 @@ window.addEventListener("load", async () => {
   setupUIEvents();
   bindEndgameModalEvents();
   handleDuelloLinkIfAny();
-  // İlk kullanım turu: artık otomatik başlamıyor. (? butonundan açılıyor)
-  // startOnboarding(false);
 });
-/* ================== İLK KULLANIM TURU (ben) ==================
-   Kullanıcı ilk kez açınca menüde modları sırayla tanıtıyorum.
-*/
-
-const ONBOARD_KEY = "hw_onboarding_done";
-
-function startOnboarding(force = false) {
-  try {
-    if (!force && localStorage.getItem(ONBOARD_KEY) === "1") return;
-  } catch (_) {}
-
-  // Ben: sadece ana menüde başlatıyorum
-  if (CURRENT_SCREEN !== "screen-home") return;
-
-  const overlay = document.getElementById("tour-overlay");
-  const panel = document.querySelector("#screen-home .panel") || document.querySelector(".panel");
-  if (panel) { panel.style.position = "relative"; }
-  if (overlay && panel && overlay.parentElement !== panel) { panel.appendChild(overlay); }
-  if (overlay) { overlay.style.position = "absolute"; overlay.style.inset = "0"; overlay.style.zIndex = "9999"; }
-
-  const tooltip = document.getElementById("tour-tooltip");
-  if (tooltip) { tooltip.style.position = "absolute"; tooltip.style.zIndex = "10000"; }
-
-  const titleEl = document.getElementById("tour-title");
-  const bodyEl  = document.getElementById("tour-body");
-  const btnNext = document.getElementById("tour-next");
-  const btnSkip = document.getElementById("tour-skip");
-
-  if (!overlay || !tooltip || !titleEl || !bodyEl || !btnNext || !btnSkip) return;
-
-const steps = [
-  {
-    sel: "#btn-home-solo",
-    t: "Solo Mod",
-    b: "Harf uzunluğunu seç. Gizli kelimeyi sınırlı denemede tahmin etmeye çalış."
-  },
-  {
-    sel: "#btn-home-duel",
-    t: "Düello",
-    b: "Bir kelime belirle, oluşan kodu arkadaşınla paylaş. Arkadaşın senin seçtiğin kelimeyi tahmin etmeye çalışsın."
-  },
-  {
-    sel: "#btn-home-group",
-    t: "Grup Yarış",
-    b: "Harf uzunluğunu seç, bir oda oluştur. Arkadaşlarınla aynı kelime üzerinden aynı anda yarış."
-  },
-  {
-    sel: "#btn-home-settings",
-    t: "Ayarlar",
-    b: "Kullanıcı adını ve tema tercihlerini buradan düzenle."
-  }
-];
-
-
-  let stepIndex = 0;
-  let currentTarget = null;
-
-  function cleanupHighlight() {
-    if (currentTarget) currentTarget.classList.remove("tour-highlight");
-    currentTarget = null;
-  }
-
-  function closeTour(markDone = true) {
-    cleanupHighlight();
-    overlay.classList.remove("active");
-    overlay.setAttribute("aria-hidden", "true");
-    window.removeEventListener("resize", onResize);
-    if (markDone) {
-      try { localStorage.setItem(ONBOARD_KEY, "1"); } catch (_) {}
-    }
-  }
-
-  function positionTooltip(target) {
-    const r = target.getBoundingClientRect();
-    const pad = 12;
-    const panel = document.querySelector('#screen-home .panel') || document.querySelector('.panel');
-    const pr = panel ? panel.getBoundingClientRect() : null;
-
-    // Tooltip ölçüsünü almak için önce resetliyorum
-    tooltip.style.left = "0px";
-    tooltip.style.top  = "0px";
-
-    const tw = tooltip.offsetWidth || 300;
-    const th = tooltip.offsetHeight || 160;
-
-    let left = r.left + (r.width / 2) - (tw / 2);
-    const minX = pr ? (pr.left + pad) : pad;
-    const maxX = pr ? (pr.right - tw - pad) : (window.innerWidth - tw - pad);
-    left = Math.max(minX, Math.min(left, maxX));
-
-    let top = r.bottom + 10;
-    if (top + th + pad > window.innerHeight) {
-      top = r.top - th - 10;
-    }
-    top = Math.max(pad, Math.min(top, window.innerHeight - th - pad));
-
-    tooltip.style.left = left + "px";
-    tooltip.style.top  = top + "px";
-  }
-
-  function renderStep() {
-    cleanupHighlight();
-
-    const s = steps[stepIndex];
-    const target = document.querySelector(s.sel);
-    if (!target) {
-      closeTour(false);
-      return;
-    }
-
-    currentTarget = target;
-    target.classList.add("tour-highlight");
-
-    titleEl.textContent = s.t;
-    bodyEl.textContent  = s.b;
-
-    btnNext.textContent = (stepIndex === steps.length - 1) ? "Bitir" : "Sıradaki";
-
-    overlay.classList.add("active");
-    overlay.setAttribute("aria-hidden", "false");
-
-    try { target.scrollIntoView({ block: "center", behavior: "smooth" }); } catch(_) {}
-
-    setTimeout(() => positionTooltip(target), 80);
-  }
-
-  function onResize() {
-    if (currentTarget) positionTooltip(currentTarget);
-  }
-
-  btnNext.onclick = () => {
-    if (stepIndex < steps.length - 1) {
-      stepIndex += 1;
-      renderStep();
-    } else {
-      closeTour(true);
-    }
-  };
-
-  btnSkip.onclick = () => closeTour(true);
-
-  window.addEventListener("resize", onResize);
-
-  renderStep();
-}
-
 /* ================== YARDIM ( ? ) ==================
    Her ekranda kısaca nasıl oynanır + teknik bilgi.
 */
