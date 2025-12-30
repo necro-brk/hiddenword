@@ -628,9 +628,8 @@ select {
 
 /* Subtle highlight for currently selected cell */
 .hw-selected{
-  background: rgba(90, 160, 255, 0.14) !important;
   box-shadow: 0 0 0 2px rgba(90, 160, 255, 0.30) !important;
-  transition: background 0.12s ease, box-shadow 0.12s ease;
+  transition: box-shadow 0.12s ease, border-color 0.12s ease;
 }
 
 
@@ -678,7 +677,6 @@ select {
 .tile.tile-selected {
   border-color: rgba(255,255,255,0.65);
   box-shadow: 0 0 0 2px rgba(90,155,255,0.18);
-  background: rgba(90,155,255,0.08);
 }
 .tile:focus { outline: none; }
 
@@ -689,4 +687,80 @@ select {
   .keyboard { width: 100%; }
   .keyboard .kb-row { gap: 6px; }
   .keyboard .kb-key { min-width: 30px; padding: 10px 8px; font-size: 13px; }
+}
+
+
+/* ===== HOME HELP FAB ( ? ) ===== */
+#screen-home .panel{ position: relative !important; }
+.help-fab{
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(0,0,0,0.25);
+  color: rgba(255,255,255,0.92);
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  box-shadow: 0 10px 22px rgba(0,0,0,0.25);
+}
+.help-fab:hover{ background: rgba(0,0,0,0.35); }
+.help-fab:active{ transform: translateY(1px); }
+
+
+/* ===== ONBOARDING TOUR (panel içi) ===== */
+.tour-overlay{
+  position: absolute;
+  inset: 0;
+  display: none;
+  z-index: 9999;
+  background: rgba(0,0,0,0.35);
+  border-radius: 16px;
+}
+.tour-overlay.active{ display:block; }
+
+.tour-tooltip{
+  position: absolute;
+  width: min(360px, calc(100% - 24px));
+  background: rgba(16,20,32,0.96);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 16px;
+  padding: 12px 12px 12px;
+  box-shadow: 0 25px 80px rgba(0,0,0,0.55);
+  color: rgba(255,255,255,0.92);
+  pointer-events: auto;
+}
+.tour-head{ display:flex; align-items:center; justify-content:space-between; gap: 12px; }
+.tour-title{ font-size: 15px; font-weight: 800; }
+.tour-body{ margin-top: 8px; font-size: 13px; color: rgba(255,255,255,0.86); line-height: 1.4; }
+.tour-actions{ display:flex; justify-content:flex-end; margin-top: 10px; }
+.tour-next{
+  border: none;
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-weight: 700;
+  cursor: pointer;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: #f9fafb;
+}
+.tour-skip{
+  width: 36px; height: 36px; border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(0,0,0,0.25);
+  color: rgba(255,255,255,0.9);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+}
+.tour-highlight{
+  position: relative;
+  z-index: 10000; /* overlay üstüne çıkar */
+  box-shadow: 0 0 0 3px rgba(90,160,255,0.30), 0 10px 24px rgba(0,0,0,0.35);
+  border-radius: 10px;
 }
