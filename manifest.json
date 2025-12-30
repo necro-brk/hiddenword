@@ -1,8 +1,8 @@
 {
   "name": "Hidden Word",
   "short_name": "HiddenWord",
-"start_url": "/hiddenword/",
-"scope": "/hiddenword/",
+  "start_url": "/hiddenword/",
+  "scope": "/hiddenword/",
   "display": "standalone",
   "background_color": "#050813",
   "theme_color": "#050813",
