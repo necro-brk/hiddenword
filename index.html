@@ -70,20 +70,94 @@ body {
       margin-bottom: 18px;
     }
 
-    <div id="supportModal" class="modal hidden">
-  <div class="modal-content">
-    <h3>Oyunu Destekle ❤️</h3>
-    <p>Hidden Word’ün gelişmesine katkıda bulunabilirsin.</p>
-
-    <button onclick="support(20)">☕ 20₺ – Bir Kahve</button>
-    <button onclick="support(50)">❤️ 50₺ – Destek Ol</button>
-    <button onclick="support(100)">🚀 100₺ – Büyük Destek</button>
-
-    <button onclick="closeSupport()">Kapat</button>
-  </div>
-</div>
-
     
+/* ===== SUPPORT MODAL (DONATION) ===== */
+.hidden{ display:none !important; }
+
+.modal{
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0,0,0,0.58);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modal-content{
+  width: min(540px, 100%);
+  background: rgba(10,16,28,0.94);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: 18px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.55);
+  padding: 18px 18px 14px;
+  position: relative;
+}
+
+.modal-content h3{
+  margin: 0 38px 10px 0;
+  font-size: 18px;
+  letter-spacing: 0.4px;
+}
+
+.modal-content p{
+  margin: 0 0 14px 0;
+  opacity: 0.9;
+  line-height: 1.35;
+}
+
+.modal-close{
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.92);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.support-grid{
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin: 10px 0 6px;
+}
+
+.support-amount{
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.95);
+  text-align: left;
+  cursor: pointer;
+  transition: transform .06s ease, background .12s ease, border-color .12s ease;
+}
+.support-amount:hover{
+  background: rgba(255,255,255,0.10);
+  border-color: rgba(255,255,255,0.14);
+}
+.support-amount:active{
+  transform: scale(0.99);
+}
+
+.support-note{
+  font-size: 12px;
+  opacity: 0.75;
+  margin-top: 8px;
+}
+
+@media (max-width: 520px){
+  .modal-content{ border-radius: 16px; }
+  .support-amount{ padding: 12px; }
+}
+
 
 /* ===== HOME LOGO (CENTER + PREMIUM) ===== */
 .home-brand{
@@ -804,6 +878,27 @@ const firebaseConfig = {
   </div>
 
 </body>
+
+  <!-- Support / Donation Modal -->
+  <div id="supportModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="supportTitle">
+    <div class="modal-content">
+      <button class="modal-close" id="supportCloseBtn" aria-label="Kapat">×</button>
+      <h3 id="supportTitle">Oyunu Destekle</h3>
+      <p>
+        Hidden Word’ü geliştirip büyütmem için küçük bir destek bırakmak istersen,
+        aşağıdan bir seçenek seçebilirsin.
+      </p>
+
+      <div class="support-grid">
+        <button class="support-amount" data-amount="20">☕ 20₺ – Bir kahve</button>
+        <button class="support-amount" data-amount="50">❤️ 50₺ – Destek ol</button>
+        <button class="support-amount" data-amount="100">🚀 100₺ – Büyük destek</button>
+      </div>
+
+      <div class="support-note">Ödeme, güvenli şekilde iyzico üzerinden açılır.</div>
+    </div>
+  </div>
+
 </html>
 
 
