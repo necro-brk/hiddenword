@@ -1558,10 +1558,16 @@ if ("serviceWorker" in navigator) {
 }
 function support(amount) {
   const links = {
-    20: "https://iyzi.link/AKbOLA",
-    50: "https://iyzi.link/AKbOLQ",
-    100: "https://iyzi.link/AKbOLg"
+    20: "https://iyzi.link/AKb0LA",
+    50: "https://iyzi.link/AKb0LQ",
+    100: "https://iyzi.link/AKb0Lg"
   };
+
+  if (!links[amount]) {
+    alert("Geçersiz destek tutarı");
+    return;
+  }
+
   window.open(links[amount], "_blank");
 }
 
