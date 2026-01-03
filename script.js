@@ -1451,6 +1451,7 @@ window.addEventListener("load", async () => {
   initFirebaseDb();          // 🔥 Firebase Realtime DB'yi başlat
   loadThemeFromStorage();
   setupUIEvents();
+  bindSupportModalEvents();
   bindEndgameModalEvents();
   handleDuelloLinkIfAny();
 });
@@ -1563,13 +1564,66 @@ function support(amount) {
     100: "https://iyzi.link/AKb0Lg"
   };
 
-  if (!links[amount]) {
-    alert("Geçersiz destek tutarı");
+  const url = links[amount];
+  if (!url) {
+    alert("Geçersiz destek tutarı.");
     return;
   }
 
-  window.open(links[amount], "_blank");
+  // Modal açıksa kapat
+  try { closeSupport(); } catch (_) {}
+
+  // Ödeme sayfasını yeni sekmede aç
+  window.open(url, "_blank", "noopener,noreferrer");
 }
+
+function openSupport() {
+  const modal = document.getElementById("supportModal");
+  if (!modal) return;
+  modal.classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+}
+
+function closeSupport() {
+  const modal = document.getElementById("supportModal");
+  if (!modal) return;
+  modal.classList.add("hidden");
+  document.body.style.overflow = "";
+}
+
+function bindSupportModalEvents() {
+  const btn = document.getElementById("supportBtn");
+  const modal = document.getElementById("supportModal");
+  const closeBtn = document.getElementById("supportCloseBtn");
+
+  if (btn && modal) {
+    btn.addEventListener("click", openSupport);
+  }
+
+  if (closeBtn) {
+    closeBtn.addEventListener("click", closeSupport);
+  }
+
+  if (modal) {
+    // Overlay click (outside content) closes
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeSupport();
+    });
+
+    // Amount buttons
+    modal.querySelectorAll("[data-amount]").forEach((b) => {
+      b.addEventListener("click", () => {
+        const amt = Number(b.getAttribute("data-amount"));
+        support(amt);
+      });
+    });
+  }
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeSupport();
+  });
+}
+
 
 
 
